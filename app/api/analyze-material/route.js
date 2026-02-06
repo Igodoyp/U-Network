@@ -153,17 +153,17 @@ export async function POST(request) {
 
     // 5. Analizar con Gemini usando input multimodal
     const prompt = `
-Eres un experto clasificando material universitario de Ingeniería.
+Eres un experto clasificando material universitario de la facultad de Ingeniería UDD.
 Analiza este documento y extrae la siguiente información en formato JSON estricto:
 
 - titulo: Un nombre claro (Ej: "Certamen 1 Cálculo III 2023").
-- categoria: Elige UNO: "Certamen", "Control", "Guía", "Apunte", "Libro", "Resumen", "Otro".
+- categoria: Elige UNO: "Certamen", "Control", "Guía", "Apunte", "Libro", "Resumen", "Laboratorio", "Otro".
 - ramo: El nombre de la asignatura (Ej: "Cálculo Integral", "Física II").
-- semestre: OBLIGATORIO formato "AÑO-SEMESTRE" donde SEMESTRE es 1 o 2 (Ej: "2023-1", "2023-2", "2024-1"). 
+- semestre: Formato "AÑO-SEMESTRE" donde SEMESTRE es 1 o 2 (Ej: "2023-1", "2023-2", "2024-1"). 
   * Si el documento dice "Bimestre IV" o "2do semestre", usa semestre 2.
   * Si dice "1er semestre", "Bimestre I-II" o similar, usa semestre 1.
-  * Si no encuentras nada claro, adivina basándote en si parece primer o segundo semestre del año.
-  * NUNCA devuelvas solo el año sin el "-1" o "-2".
+  * Si no encuentras el semestre, pon solo el año.
+  * Si no encuentras año ni semestre, pon null.
 - descripcion: Resumen muy breve (máx 15 palabras).
 - profesor: Nombre y apellido del profesor si aparece (o null).
 - solucion: true si el archivo contiene respuestas/pauta, false si no.
