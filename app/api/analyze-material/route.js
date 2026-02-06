@@ -157,7 +157,7 @@ Eres un experto clasificando material universitario de la facultad de Ingenierí
 Analiza este documento y extrae la siguiente información en formato JSON estricto:
 
 - titulo: Un nombre claro (Ej: "Certamen 1 Cálculo III 2023").
-- categoria: Elige UNO: "Certamen", "Control", "Guía", "Apunte", "Libro", "Resumen", "Laboratorio", "Otro".
+- categoria: Elige UNO: "Certamen", "Control", "Guía", "Apunte", "Resumen", "Laboratorio", "Formulario", "Otro".
 - ramo: El nombre de la asignatura (Ej: "Cálculo Integral", "Física II").
 - semestre: Formato "AÑO-SEMESTRE" donde SEMESTRE es 1 o 2 (Ej: "2023-1", "2023-2", "2024-1"). 
   * Si el documento dice "Bimestre IV" o "2do semestre", usa semestre 2.
