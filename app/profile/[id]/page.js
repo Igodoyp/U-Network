@@ -284,7 +284,7 @@ export default function UserProfilePage() {
                     <BookOpen className="w-4 h-4" />
                     {getOrdinalYear(profileUser.anio)}
                   </p>
-                ) : ( (anio: {profileUser.anio}, semestre: {profileUser.anio})
+                ) : (
                   <p className="flex items-center justify-center md:justify-start gap-2">
                     <BookOpen className="w-4 h-4" />
                     Año no especificado
