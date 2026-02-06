@@ -112,12 +112,12 @@ export default function UserProfilePage() {
         const processedUser = {
           ...userData,
           ramos: userData.ramos_favoritos
-        console.log("Processed user anio:", processedUser.anio)
-        console.log("Processed user semestre:", processedUser.semestre)
-
             ?.filter(r => r.ramos)
             .map(r => r.ramos) || []
         }
+
+        console.log("Processed user anio:", processedUser.anio)
+        console.log("Processed user semestre:", processedUser.semestre)
 
         setProfileUser(processedUser)
 
