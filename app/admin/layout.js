@@ -6,6 +6,7 @@ import { useRouter, usePathname } from "next/navigation"
 import { useUserContext } from "@/context/UserContext"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
+import { Footer } from "@/components/footer"
 import {
   LayoutDashboard,
   Users,
@@ -95,6 +96,7 @@ export default function AdminLayout({ children }) {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   )
 }

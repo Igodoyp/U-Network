@@ -2,6 +2,7 @@ import "./globals.css"
 import { UserProvider } from "@/context/UserContext"
 import { FeedbackButton } from "@/components/feedback-button"
 import { ConditionalHeader } from "@/components/conditional-header"
+import { Footer } from "@/components/footer"
 import { Inter } from 'next/font/google'
 
 const inter = Inter({
@@ -31,6 +32,7 @@ export default function RootLayout({ children }) {
           <main className="pb-16 md:pb-0">
             {children}
           </main>
+          <Footer />
           <FeedbackButton />
         </UserProvider>
       </body>

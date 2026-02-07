@@ -276,21 +276,21 @@ export default function UNetworkAuth() {
           {/* Resto del manifiesto */}
           <div className="space-y-6 text-gray-700 border-t pt-8">
             <div>
-              <strong className="text-gray-900">el problema:</strong>
+              <strong className="text-gray-900">El problema:</strong>
               <p className="mt-2">
-                entrar a la universidad puede sentirse como llegar a una fiesta donde todos se conocen menos tú. Si no tienes los contactos, no tienes el material. Y si no tienes el material, te aislas estudiando el doble para lograr la mitad.
+                Entrar a la universidad puede sentirse como llegar a una fiesta donde todos se conocen menos tú. Si no tienes los contactos, no tienes el material. Y si no tienes el material, te aislas estudiando el doble para lograr la mitad.
               </p>
             </div>
 
             <div>
-              <strong className="text-gray-900">nuestra solución:</strong>
+              <strong className="text-gray-900">Nuestra solución:</strong>
               <p className="mt-2">
-                creemos que el verdadero networking no nace del interés ("¿me pasas la prueba?"), sino de la colaboración. Al liberar el conocimiento, transformamos la competencia tóxica en cooperación. Queremos que dejes de buscar archivos desesperadamente y empieces a conectar con quienes ya recorrieron tu camino.
+                Creemos que el verdadero networking no nace del interés ("¿me pasas la prueba?"), sino de la colaboración. Al liberar el conocimiento, transformamos la competencia tóxica en cooperación. Queremos que dejes de buscar archivos desesperadamente y empieces a conectar con quienes ya recorrieron tu camino.
               </p>
             </div>
 
             <div>
-              <strong className="text-gray-900 block mb-3">los 3 pilares de unetwork</strong>
+              <strong className="text-gray-900 block mb-3">Los 3 pilares de unetwork</strong>
               <ul className="space-y-3">
                 <li>
                   <span className="text-2xl mr-2">⚖️</span>
@@ -317,9 +317,9 @@ export default function UNetworkAuth() {
             </div>
 
             <div className="border-t pt-4">
-              <strong className="text-gray-900 block mb-2">¿eres mechón?</strong>
+              <strong className="text-gray-900 block mb-2">¿Eres mechón?</strong>
               <p className="text-sm">
-                bienvenido a tu red de apoyo. Olvídate del miedo a quedarte atrás por no estar en el grupo de WhatsApp "correcto". Aquí partes con las mismas herramientas que el resto. Úsalo, aprende y, cuando domines el ramo, devuélvele la mano a la siguiente generación.
+                Bienvenido a tu red de apoyo. Olvídate del miedo a quedarte atrás por no estar en el grupo de WhatsApp "correcto". Aquí partes con las mismas herramientas que el resto. Úsalo, aprende y, cuando domines el ramo, devuélvele la mano a la siguiente generación.
               </p>
             </div>
 
