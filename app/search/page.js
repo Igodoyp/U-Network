@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
@@ -16,6 +16,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { supabase } from "@/lib/supabaseClient"
 import { useUserContext } from "@/context/UserContext" // Añadir esta importación
+import { useBuscador } from "@/hooks/useBuscador"
 import {
   Dialog,
   DialogContent,
@@ -27,7 +28,7 @@ import {
 } from "@/components/ui/dialog"
 
 // Tipos de material constantes (coinciden con las opciones de subida)
-const tiposMaterial = ["Certamen", "Examen", "Control", "Apuntes", "Trabajo", "Tarea", "Proyecto", "Presentación"]
+const tiposMaterial = ["Certamen", "Control", "Guía", "Apunte", "Resumen", "Laboratorio", "Formulario", "Otro"]
 
 function MaterialCard({ material }) {
   const router = useRouter()
@@ -94,20 +95,42 @@ export default function SearchPage() {
   const router = useRouter()
   
   // Estados para la búsqueda y paginación
-  const [searchQuery, setSearchQuery] = useState(searchParams?.get("q") || "")
+  const initialQuery = searchParams?.get("q") || ""
   const [showFilters, setShowFilters] = useState(false)
   
-  // Inicializar selectedCarreras con la carrera del usuario si está disponible
-  const [selectedCarreras, setSelectedCarreras] = useState(() => {
-    if (userData?.carrera) {
-      return [userData.carrera];
-    }
-    return [];
-  })
+  // Carreras seleccionadas (sin valor por defecto)
+  const [selectedCarreras, setSelectedCarreras] = useState([])
   const [selectedRamoIds, setSelectedRamoIds] = useState([]); // Array de IDs de ramos seleccionados
   const [selectedRamoNombre, setSelectedRamoNombre] = useState(""); // Nombre para mostrar
   const [selectedTipos, setSelectedTipos] = useState([])
   const [orderBy, setOrderBy] = useState("mejor-valorados")
+
+  const ordenarPorRpc = useMemo(() => {
+    switch (orderBy) {
+      case "mejor-valorados":
+        return "mejor_valorados"
+      case "mas-descargas":
+        return "descargas"
+      case "mas-recientes":
+      default:
+        return null
+    }
+  }, [orderBy])
+
+  const {
+    query: searchQuery,
+    setQuery: setSearchQuery,
+    resultados: rpcResultados,
+    cargando: isSearchingRpc,
+  } = useBuscador({
+    initialQuery,
+    limit: 1000,
+    rpcArgs: useMemo(() => (ordenarPorRpc ? { ordenar_por: ordenarPorRpc } : {}), [ordenarPorRpc]),
+  })
+
+  const searchIds = useMemo(() => rpcResultados.map((r) => r.id).filter(Boolean), [rpcResultados])
+  const searchIdsKey = useMemo(() => searchIds.join(","), [searchIds])
+
   const [dateRange, setDateRange] = useState([2020, 2025])
   const [openRamo, setOpenRamo] = useState(false)
   const [openCarrera, setOpenCarrera] = useState(false)
@@ -122,6 +145,8 @@ export default function SearchPage() {
   const [carreras, setCarreras] = useState([])
   const [ramos, setRamos] = useState([])
   const [ramosDisponibles, setRamosDisponibles] = useState([])
+
+  const isSearching = isLoading || isSearchingRpc
 
   // Nuevos estados al inicio del componente SearchPage
   const [selectedProfesores, setSelectedProfesores] = useState([]);
@@ -144,22 +169,6 @@ export default function SearchPage() {
   // Cargar los datos iniciales de carreras y ramos
   useEffect(() => {
     const loadFilterOptions = async () => {
-      // Eliminar esta consulta que causa el error 404
-      /*
-      const { data: carrerasData, error: carrerasError } = await supabase
-        .from("carreras")
-        .select("nombre")
-        .order("nombre")
-      
-      if (!carrerasError && carrerasData) {
-        setCarreras(carrerasData.map(c => c.nombre));
-      } else {
-        console.error("Error al cargar carreras:", carrerasError);
-        // Usar las carreras de respaldo si hay error
-      }
-      */
-      
-      // En su lugar, usar directamente el array de carreras
       setCarreras([
         "Ingeniería Plan Común",
         "Ingeniería Civil Industrial",
@@ -230,6 +239,9 @@ export default function SearchPage() {
   // Cargar materiales desde Supabase
   useEffect(() => {
     const fetchMaterials = async () => {
+      // If there is a text query, wait for RPC search to finish
+      if (searchQuery && isSearchingRpc) return;
+
       setIsLoading(true);
       
       try {
@@ -262,10 +274,15 @@ export default function SearchPage() {
             status
           `)
           .eq("status", "public");
-        
-        // Aplicar filtro de búsqueda
+
+        // Aplicar filtro de búsqueda via RPC (buscar_materiales)
         if (searchQuery) {
-          query = query.or(`titulo.ilike.%${searchQuery}%,descripcion.ilike.%${searchQuery}%`);
+          if (searchIds.length === 0) {
+            setMaterials([]);
+            applyLocalFilters([]);
+            return;
+          }
+          query = query.in("id", searchIds);
         }
         
         // Aplicar filtro de carreras
@@ -311,7 +328,7 @@ export default function SearchPage() {
         }
         
         // Transformar los datos para la UI
-        const processedMaterials = data.map(item => ({
+        let processedMaterials = data.map(item => ({
           id: item.id,
           title: item.titulo,
           type: item.categoria,
@@ -328,6 +345,20 @@ export default function SearchPage() {
           fileUrl: item.file_url,
           hasSolution: item.solucion || false // Añadir hasSolution
         }));
+
+        // Si hay búsqueda textual, preservar el orden que entrega la RPC
+        // (que ya viene ordenado por score/descargas/recientes según ordenar_por)
+        if (searchQuery && searchIds.length > 0) {
+          const indexById = new Map(searchIds.map((id, idx) => [id, idx]))
+          processedMaterials = processedMaterials.sort((a, b) => {
+            const ai = indexById.get(a.id)
+            const bi = indexById.get(b.id)
+            if (ai === undefined && bi === undefined) return 0
+            if (ai === undefined) return 1
+            if (bi === undefined) return -1
+            return ai - bi
+          })
+        }
         
         setMaterials(processedMaterials);
         applyLocalFilters(processedMaterials);
@@ -339,7 +370,7 @@ export default function SearchPage() {
     };
     
     fetchMaterials();
-  }, [searchQuery, selectedCarreras, selectedRamoIds, selectedTipos, selectedProfesores, orderBy]);
+  }, [searchQuery, isSearchingRpc, searchIdsKey, selectedCarreras, selectedRamoIds, selectedTipos, selectedProfesores, orderBy]);
 
   // Aplicar filtros locales (aquellos que no pudimos aplicar en la consulta directamente)
   const applyLocalFilters = (data) => {
@@ -530,13 +561,6 @@ export default function SearchPage() {
       </div>
     </div>
   );
-
-  // Efecto para actualizar la carrera seleccionada cuando cambian los datos del usuario
-  useEffect(() => {
-    if (userData?.carrera && !selectedCarreras.includes(userData.carrera)) {
-      setSelectedCarreras([userData.carrera]);
-    }
-  }, [userData]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
@@ -874,7 +898,7 @@ export default function SearchPage() {
           <div className="max-w-4xl mx-auto px-3 sm:px-4 py-6">
             <div className="mb-4">
               <p className="text-sm text-gray-600">
-                {isLoading ? (
+                {isSearching ? (
                   "Buscando materiales..."
                 ) : (
                   `Mostrando ${startIndex + 1}-${Math.min(endIndex, totalResults)} de ${totalResults} resultados
@@ -884,7 +908,7 @@ export default function SearchPage() {
             </div>
 
             {/* Estado de carga */}
-            {isLoading ? (
+            {isSearching ? (
               <div className="py-20 flex flex-col items-center justify-center gap-4">
                 <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                 <p className="text-gray-600">Cargando resultados...</p>

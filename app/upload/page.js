@@ -49,7 +49,7 @@ import { Check, ChevronDown, Plus } from "lucide-react"
 import { cn } from "@/lib/utils" // Asegúrate de que esta utilidad esté disponible
 import { Switch } from "@/components/ui/switch"
 
-const categorias = ["Certamen", "Examen", "Control", "Apuntes", "Trabajo", "Tarea", "Proyecto", "Presentación", "Otros"]
+const categorias = ["Certamen", "Control", "Guía", "Apunte", "Resumen", "Laboratorio", "Formulario", "Otro"]
 
 const carreras = [
   "Ingeniería Plan Común",
