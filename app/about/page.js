@@ -27,7 +27,7 @@ export default function AboutPage() {
             Lo que empezó como una idea simple, hoy es una plataforma moderna construida con el mismo estándar que usan las startups actuales. Quería que fuera rápida, útil y gratuita:
           </p>
           <ul className="list-disc pl-5 text-sm text-gray-700 leading-relaxed space-y-2">
-            <li>Core: Desarrollada en Next.js 14 para una experiencia instantánea.</li>
+            <li>Core: Desarrollada en Next.js 16 para una experiencia instantánea.</li>
             <li>Base de Datos: Supabase (PostgreSQL) para manejar la información de forma segura y escalable.</li>
             <li>Inteligencia Artificial: Integración con Gemini Flash 2.5 para leer, clasificar y etiquetar los documentos automáticamente.</li>
             <li>Infraestructura: Desplegada en el Edge Network de Vercel.</li>

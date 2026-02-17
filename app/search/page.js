@@ -146,6 +146,35 @@ export default function SearchPage() {
   const [ramos, setRamos] = useState([])
   const [ramosDisponibles, setRamosDisponibles] = useState([])
 
+  const normalizeRamoNombre = (value) => (value || "").toString().trim().toLowerCase()
+
+  const ramoIndexByNombre = useMemo(() => {
+    const index = new Map()
+    for (const ramo of ramos) {
+      const key = normalizeRamoNombre(ramo?.nombre)
+      if (!key) continue
+      const existing = index.get(key)
+      if (!existing) {
+        index.set(key, { nombre: ramo.nombre, ids: [ramo.id] })
+      } else {
+        existing.ids.push(ramo.id)
+      }
+    }
+    return index
+  }, [ramos])
+
+  const ramosDisponiblesUnicos = useMemo(() => {
+    const seen = new Set()
+    const out = []
+    for (const ramo of ramosDisponibles) {
+      const key = normalizeRamoNombre(ramo?.nombre)
+      if (!key || seen.has(key)) continue
+      seen.add(key)
+      out.push({ key, nombre: ramo.nombre })
+    }
+    return out
+  }, [ramosDisponibles])
+
   const isSearching = isLoading || isSearchingRpc
 
   // Nuevos estados al inicio del componente SearchPage
@@ -224,17 +253,13 @@ export default function SearchPage() {
     }
   }, [selectedCarreras, ramos]); // Quitar selectedRamoIds de las dependencias
 
-  // Verificar si el ramo seleccionado sigue disponible
+  // Si se limpian las carreras, también limpiamos el ramo
   useEffect(() => {
-    if (selectedRamoIds.length > 0 && ramosDisponibles.length > 0) {
-      // Si el ramo seleccionado ya no está disponible, resetear
-      const ramoSigueDisponible = ramosDisponibles.some(r => selectedRamoIds.includes(r.id));
-      if (!ramoSigueDisponible) {
-        setSelectedRamoIds([]);
-        setSelectedRamoNombre("");
-      }
+    if (selectedCarreras.length === 0 && selectedRamoIds.length > 0) {
+      setSelectedRamoIds([])
+      setSelectedRamoNombre("")
     }
-  }, [ramosDisponibles, selectedRamoIds]);
+  }, [selectedCarreras, selectedRamoIds])
 
   // Cargar materiales desde Supabase
   useEffect(() => {
@@ -285,8 +310,8 @@ export default function SearchPage() {
           query = query.in("id", searchIds);
         }
         
-        // Aplicar filtro de carreras
-        if (selectedCarreras.length > 0) {
+        // Aplicar filtro de carreras (ignorar si hay ramo seleccionado)
+        if (selectedCarreras.length > 0 && selectedRamoIds.length === 0) {
           query = query.in("carrera", selectedCarreras);
         }
         
@@ -422,29 +447,13 @@ export default function SearchPage() {
     setSelectedCarreras(selectedCarreras.filter((c) => c !== carrera));
   };
 
-  const handleRamoSelect = (ramoId, ramoNombre) => {
-    // Verificar si estamos seleccionando un ramo con nombre idéntico a otro ya seleccionado
-    if (selectedRamoNombre === ramoNombre) {
-      // Si el ramo ya está seleccionado, lo quitamos
-      if (selectedRamoIds.includes(ramoId)) {
-        setSelectedRamoIds(selectedRamoIds.filter(id => id !== ramoId));
-        
-        // Si quitamos el último ID con ese nombre, limpiamos el nombre también
-        if (selectedRamoIds.length === 1) {
-          setSelectedRamoNombre("");
-        }
-      } else {
-        // Si no está seleccionado, lo agregamos a la lista de IDs
-        setSelectedRamoIds([...selectedRamoIds, ramoId]);
-      }
-    } else {
-      // Si es un ramo nuevo, reemplazamos los anteriores
-      setSelectedRamoIds([ramoId]);
-      setSelectedRamoNombre(ramoNombre);
-    }
-    
-    setOpenRamo(false);
-  };
+  const handleRamoSelect = (_ramoId, ramoNombre) => {
+    const key = normalizeRamoNombre(ramoNombre)
+    const entry = ramoIndexByNombre.get(key)
+    setSelectedRamoNombre(entry?.nombre || ramoNombre)
+    setSelectedRamoIds(entry?.ids || [])
+    setOpenRamo(false)
+  }
 
   const handleTipoChange = (tipo, checked) => {
     if (checked) {
@@ -681,15 +690,12 @@ export default function SearchPage() {
                       <CommandList>
                         <CommandEmpty>No se encontró el ramo.</CommandEmpty>
                         <CommandGroup>
-                          {ramosDisponibles.map((ramo) => (
+                          {ramosDisponiblesUnicos.map((ramo) => (
                             <CommandItem
-                              key={ramo.id}
-                              onSelect={() => handleRamoSelect(ramo.id, ramo.nombre)}
+                              key={ramo.key}
+                              onSelect={() => handleRamoSelect(null, ramo.nombre)}
                             >
-                              <div className="flex flex-col">
-                                <span>{ramo.nombre}</span>
-                                <span className="text-xs text-gray-500">{ramo.carrera}</span>
-                              </div>
+                              <span>{ramo.nombre}</span>
                             </CommandItem>
                           ))}
                         </CommandGroup>
@@ -1094,25 +1100,29 @@ export default function SearchPage() {
                     <div className="space-y-2">
                       {ramosDisponibles
                         .filter(ramo => ramo.nombre.toLowerCase().includes(ramoSearch.toLowerCase()))
+                        .reduce((acc, ramo) => {
+                          const key = normalizeRamoNombre(ramo.nombre)
+                          if (!key) return acc
+                          if (acc.seen.has(key)) return acc
+                          acc.seen.add(key)
+                          acc.items.push({ key, nombre: ramo.nombre })
+                          return acc
+                        }, { seen: new Set(), items: [] }).items
                         .map((ramo) => (
-                          <div key={ramo.id} className="flex items-center gap-2">
+                          <div key={ramo.key} className="flex items-center gap-2">
                             <Checkbox
-                              id={`ramo-${ramo.id}`}
-                              checked={selectedRamoIds.includes(ramo.id)}
+                              id={`ramo-${ramo.key}`}
+                              checked={normalizeRamoNombre(selectedRamoNombre) === ramo.key}
                               onCheckedChange={(checked) => {
                                 if (checked) {
-                                  setSelectedRamoIds([ramo.id]);
-                                  setSelectedRamoNombre(ramo.nombre);
+                                  handleRamoSelect(null, ramo.nombre)
                                 } else {
                                   setSelectedRamoIds([]);
                                   setSelectedRamoNombre("");
                                 }
                               }}
                             />
-                            <Label htmlFor={`ramo-${ramo.id}`} className="flex flex-col">
-                              <span>{ramo.nombre}</span>
-                              <span className="text-xs text-gray-500">{ramo.carrera}</span>
-                            </Label>
+                            <Label htmlFor={`ramo-${ramo.key}`}>{ramo.nombre}</Label>
                           </div>
                         ))
                       }

@@ -355,19 +355,26 @@ const ProfilePage = () => {
     setIsDeletingMaterial(true);
     try {
       // 1. Eliminar el registro de la base de datos
-      const { error: dbError } = await supabase
+      const { data: deletedRows, error: dbError } = await supabase
         .from("materiales_metadata")
         .delete()
         .eq("id", materialId)
-        .eq("autor_id", userData.id); // Verificar que sea el propietario
+        .eq("autor_id", userData.id) // Verificar que sea el propietario
+        .select("id, file_url");
       
       if (dbError) throw new Error(`Error al eliminar el registro: ${dbError.message}`);
+
+      if (!deletedRows || deletedRows.length === 0) {
+        throw new Error("No se pudo eliminar el material (no existe o no tienes permisos).")
+      }
+
+      const deletedFileUrl = fileUrl || deletedRows[0]?.file_url
       
       // 2. Eliminar el archivo de storage si existe la URL
-      if (fileUrl) {
+      if (deletedFileUrl) {
         const { error: storageError } = await supabase.storage
           .from("materiales")
-          .remove([fileUrl]);
+          .remove([deletedFileUrl]);
         
         if (storageError) {
           console.error("Error al eliminar archivo de storage:", storageError);
@@ -376,7 +383,7 @@ const ProfilePage = () => {
       }
       
       // 3. Actualizar el estado local eliminando el material
-      setUserMaterial(userMaterial.filter(m => m.id !== materialId));
+      setUserMaterial(userMaterial.filter(m => String(m.id) !== String(materialId)));
       
       // 4. Mostrar mensaje de éxito
       alert("Material eliminado correctamente");
