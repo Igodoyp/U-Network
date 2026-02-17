@@ -398,6 +398,19 @@ export default function SearchPage() {
     applyLocalFilters(materials);
   }, [dateRange, materials]);
 
+  // Resetear paginación cuando cambie la búsqueda o filtros
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [
+    searchQuery,
+    selectedCarreras,
+    selectedRamoIds,
+    selectedTipos,
+    selectedProfesores,
+    orderBy,
+    dateRange,
+  ])
+
   const handleCarreraSelect = (carrera) => {
     if (!selectedCarreras.includes(carrera)) {
       setSelectedCarreras([...selectedCarreras, carrera]);
@@ -485,15 +498,22 @@ export default function SearchPage() {
   };
 
   const totalPages = Math.ceil(totalResults / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentResults = filteredMaterials.slice(startIndex, endIndex);
+  const startIndex = 0;
+  const endIndex = currentPage * itemsPerPage;
+  const currentResults = filteredMaterials.slice(0, endIndex);
 
   const loadMoreResults = () => {
     if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
     }
   };
+
+  // Si baja el total de resultados (por nueva búsqueda/filtros), evitar quedar fuera de rango
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(1)
+    }
+  }, [currentPage, totalPages])
 
   const applyFilters = () => {
     setCurrentPage(1); // Reset to first page when applying filters
@@ -922,10 +942,10 @@ export default function SearchPage() {
                 </div>
 
                 {/* Paginación */}
-                {currentPage < totalPages && (
+                {endIndex < totalResults && (
                   <div className="text-center py-8">
                     <Button onClick={loadMoreResults} variant="outline" className="bg-transparent">
-                      Cargar más resultados ({totalResults - endIndex} restantes)
+                      Cargar más resultados ({Math.max(totalResults - endIndex, 0)} restantes)
                     </Button>
                   </div>
                 )}

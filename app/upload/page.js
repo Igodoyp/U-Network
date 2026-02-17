@@ -411,7 +411,7 @@ export default function UploadPage() {
 
   // 2. Modificamos la función handleSubmit para guardar el ID del material creado
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    e?.preventDefault?.()
 
     if (!userData || !userData.id) {
       alert("No se pudo obtener el ID del usuario. Por favor, inicia sesión nuevamente.")
@@ -1254,7 +1254,7 @@ export default function UploadPage() {
               </Button>
               <Button
                 disabled={!formData.titulo || !formData.categoria || !formData.carrera}
-                onClick={() => handleSubmit()}
+                onClick={(e) => handleSubmit(e)}
                 className="w-2/3 ml-2 bg-blue-600"
               >
                 Guardar material
