@@ -184,19 +184,43 @@ export default function Dashboard() {
                 if (activeTab === "recent") {
                     // Para recientes, ordenamos por fecha descendente
                     query = query.order("created_at", { ascending: false });
+                    query = query.limit(20);
                 } else {
                     // Para recomendados, filtramos por los ramos del usuario si tiene ramos inscritos
-                    if (userSubjects.length > 0) {
+                    if (userSubjectIds.length > 0) {
                         query = query.in("ramo_id", userSubjectIds);
                     }
                     // Ordenar por valoraciones positivas descendentes
                     query = query.order("val_positivas", { ascending: false });
+                    query = query.limit(20);
                 }
                 
-                // Limitar a 20 registros para no sobrecargar
-                query = query.limit(20);
+                let { data, error } = await query;
                 
-                const { data, error } = await query;
+                // Fallback: si es "recomendados" y no hay resultados por ramos,
+                // mostrar material de la misma carrera ordenado por mejor valorados
+                if (activeTab === "recommended" && (!data || data.length === 0) && userData?.carrera) {
+                    const fallback = await supabase
+                        .from("materiales_metadata")
+                        .select(`
+                            id, titulo, ramo_id,
+                            ramos:ramo_id (nombre, carrera, semestre),
+                            profesor_id,
+                            profesores:profesor_id (id, nombre),
+                            carrera, semestre, autor_id, categoria,
+                            file_url, descripcion, created_at,
+                            val_positivas, val_negativas, descargas, solucion, status
+                        `)
+                        .eq("status", "public")
+                        .eq("carrera", userData.carrera)
+                        .order("val_positivas", { ascending: false })
+                        .limit(20);
+                    
+                    if (!fallback.error && fallback.data) {
+                        data = fallback.data;
+                        error = null;
+                    }
+                }
                 
                 if (error) {
                     console.error("Error al obtener materiales:", error);
@@ -274,7 +298,7 @@ export default function Dashboard() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
             {/* Header con búsqueda y botón subir */}
-            <div className="bg-white shadow-sm border-b sticky top-16 z-10">
+            <div className="bg-white shadow-sm border-b sticky top-16 sm:top-28 z-10">
                 <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4">
                     <div className="flex items-center justify-between gap-3 sm:gap-4">
                         {/* Barra de búsqueda */}

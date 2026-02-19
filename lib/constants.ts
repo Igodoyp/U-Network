@@ -27,9 +27,7 @@ export const AÑOS = ["1", "2", "3", "4", "5", "6"] as const
 export const ONBOARDING_STEPS = [
   { id: "auth", name: "Cuenta" },
   { id: "profile", name: "Perfil" },
-  { id: "interests", name: "Intereses" },
   { id: "subjects", name: "Ramos" },
-  { id: "complete", name: "Completado" },
 ] as const
 
 /**

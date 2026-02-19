@@ -596,7 +596,7 @@ export default function SearchPage() {
       <div className="flex flex-col lg:flex-row"> {/* Cambiar a flex-col por defecto */}
         {/* Sidebar de filtros para desktop (visible solo en desktop) */}
         <div className="hidden lg:block lg:w-80 lg:flex-shrink-0">
-          <div className="sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto p-4 sm:p-6 space-y-6 bg-white border-r">
+          <div className="sticky top-16 sm:top-28 h-[calc(100vh-4rem)] sm:h-[calc(100vh-7rem)] overflow-y-auto p-4 sm:p-6 space-y-6 bg-white border-r">
             {/* Contenido de filtros para desktop */}
             <div className="space-y-6">
               <div className="flex items-center justify-between">
@@ -802,7 +802,7 @@ export default function SearchPage() {
         {/* Contenido principal */}
         <div className="flex-1">
           {/* Barra de búsqueda */}
-          <div className="bg-white shadow-sm border-b sticky top-16 z-30">
+          <div className="bg-white shadow-sm border-b sticky top-16 sm:top-28 z-30">
             <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4">
               <div className="flex items-center gap-4">
                 <div className="relative flex-1">
@@ -970,7 +970,7 @@ export default function SearchPage() {
 
         {/* Panel de filtros móvil - AÑADIDOS LOS FILTROS QUE FALTABAN */}
         <div
-          className={`fixed top-16 bottom-0 left-0 z-40 w-full sm:w-80 bg-white shadow-lg transform transition-transform duration-300 ease-in-out ${
+          className={`fixed top-16 sm:top-28 bottom-0 left-0 z-40 w-full sm:w-80 bg-white shadow-lg transform transition-transform duration-300 ease-in-out ${
             showFilters ? "translate-x-0" : "-translate-x-full"
           } lg:hidden`}
         >

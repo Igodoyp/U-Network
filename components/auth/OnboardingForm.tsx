@@ -1,19 +1,17 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Toggle } from "@/components/ui/toggle"
 import { Spinner } from "@/components/ui/spinner"
-import { InfoTooltip } from "@/components/ui/info-tooltip"
-import { BookOpen, CheckCircle, Sparkles, FileText, Target, GraduationCap, User, LogOut } from "lucide-react"
+import { BookOpen, CheckCircle, GraduationCap, User, LogOut, Search, X } from "lucide-react"
 import { getPublicAvatarUrl } from "@/lib/authService"
 import * as authService from "@/lib/authService"
-import { CARRERAS, AÑOS, INTEREST_CATEGORIES, OnboardingStepId } from "@/lib/constants"
+import { CARRERAS, AÑOS, OnboardingStepId } from "@/lib/constants"
 import { supabase } from "@/lib/supabaseClient"
 import { useRouter } from "next/navigation"
 
@@ -47,33 +45,35 @@ export function OnboardingForm({
   carreraActual,
   anioActual,
   onSaveProfile,
-  onSaveIntereses,
   onSaveRamos,
   onFinish,
   onStepChange,
-  onSkipIntereses,
   onSkipRamos,
   isExistingUser = false,
   needsProfile = false,
   initialStep
 }: OnboardingFormProps) {
-  const [currentStep, setCurrentStep] = useState<OnboardingStep>(initialStep || (needsProfile ? 'profile' : 'interests'))
+  // Skip interests step — go straight from profile to subjects
+  const resolvedInitial = initialStep === 'interests' ? 'subjects' : initialStep
+  const [currentStep, setCurrentStep] = useState<OnboardingStep>(
+    resolvedInitial || (needsProfile ? 'profile' : 'subjects')
+  )
   const [carrera, setCarrera] = useState(carreraActual || '')
   const [nombre, setNombre] = useState(userName || '')
-  
+
   // Sincronizar paso con el padre
   useEffect(() => {
     if (onStepChange) {
-      onStepChange(currentStep)
+      onStepChange(currentStep === 'interests' ? 'subjects' : currentStep)
     }
   }, [currentStep, onStepChange])
 
   const [anio, setAnio] = useState(anioActual || '')
-  const [selectedInterests, setSelectedInterests] = useState<string[]>([])
   const [ramosSeleccionados, setRamosSeleccionados] = useState<Ramo[]>([])
   const [ramosPorAnio, setRamosPorAnio] = useState<Record<string, Ramo[]>>({})
   const [isLoading, setIsLoading] = useState(false)
   const [logoUrl, setLogoUrl] = useState("")
+  const [ramoSearch, setRamoSearch] = useState("")
   const router = useRouter()
 
   const handleLogout = async () => {
@@ -109,20 +109,41 @@ export function OnboardingForm({
     fetchRamos()
   }, [currentStep, carrera])
 
-  const toggleInterest = (interest: string) => {
-    setSelectedInterests(prev => 
-      prev.includes(interest)
-        ? prev.filter(i => i !== interest)
-        : [...prev, interest]
-    )
-  }
+  // Normalize text: strip diacritics so "calculo" matches "Cálculo"
+  const normalize = (text: string) =>
+    text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+
+  // Filtered ramos based on search
+  const filteredRamosPorAnio = useMemo(() => {
+    if (!ramoSearch.trim()) return ramosPorAnio
+
+    const query = normalize(ramoSearch.trim())
+    const filtered: Record<string, Ramo[]> = {}
+
+    for (const [anioKey, ramos] of Object.entries(ramosPorAnio)) {
+      const matching = ramos.filter(r => normalize(r.nombre).includes(query))
+      if (matching.length > 0) {
+        filtered[anioKey] = matching
+      }
+    }
+
+    return filtered
+  }, [ramosPorAnio, ramoSearch])
+
+  const totalRamosCount = useMemo(() => {
+    return Object.values(ramosPorAnio).reduce((acc, ramos) => acc + ramos.length, 0)
+  }, [ramosPorAnio])
+
+  const filteredRamosCount = useMemo(() => {
+    return Object.values(filteredRamosPorAnio).reduce((acc, ramos) => acc + ramos.length, 0)
+  }, [filteredRamosPorAnio])
 
   const handleCompleteProfile = async () => {
     if (!nombre.trim()) {
       alert("Por favor ingresa tu nombre")
       return
     }
-    
+
     if (!carrera || !anio) {
       alert("Por favor selecciona tu carrera y año")
       return
@@ -133,42 +154,13 @@ export function OnboardingForm({
       if (onSaveProfile) {
         await onSaveProfile(carrera, anio, nombre.trim())
       }
-      setCurrentStep('interests')
+      setCurrentStep('subjects')
     } catch (err) {
       console.error("Error al guardar perfil:", err)
       alert("Ocurrió un error al guardar tu perfil.")
     } finally {
       setIsLoading(false)
     }
-  }
-
-  const handleCompleteInterests = async () => {
-    setIsLoading(true)
-    
-    try {
-      if (selectedInterests.length > 0) {
-        const interesesData = selectedInterests.map((interes) => ({
-          usuario_id: usuarioId,
-          interes: interes
-        }))
-
-        await onSaveIntereses(interesesData)
-      }
-
-      setCurrentStep('subjects')
-    } catch (err) {
-      console.error("Error al guardar intereses:", err)
-      alert("Ocurrió un error al guardar tus intereses.")
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleSkipInterests = () => {
-    if (onSkipIntereses) {
-      onSkipIntereses()
-    }
-    setCurrentStep('subjects')
   }
 
   const handleRamoChange = (ramo: Ramo, checked: boolean) => {
@@ -181,7 +173,7 @@ export function OnboardingForm({
 
   const handleCompleteSubjects = async () => {
     setIsLoading(true)
-    
+
     try {
       if (ramosSeleccionados.length > 0) {
         const ramosData = ramosSeleccionados.map((ramo) => ({
@@ -210,7 +202,7 @@ export function OnboardingForm({
 
   const getOrdinalYear = (year: string): string => {
     const yearNum = parseInt(year)
-    switch(yearNum) {
+    switch (yearNum) {
       case 1: return "1ero"
       case 2: return "2do"
       case 3: return "3ero"
@@ -221,83 +213,69 @@ export function OnboardingForm({
     }
   }
 
-  // Profile step (for Azure OAuth users)
+  // ============================================================================
+  // PROFILE STEP
+  // ============================================================================
   if (currentStep === 'profile') {
     return (
-      <Card className="w-full shadow-xl border-0">
-        <CardHeader className="text-center space-y-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-t-lg relative">
+      <Card className="w-full shadow-xl border-0 overflow-hidden">
+        <CardHeader className="text-center space-y-3 bg-gradient-to-br from-blue-50 to-purple-50 pb-6 relative">
           {/* Botón de cerrar sesión */}
           <Button
             onClick={handleLogout}
             variant="ghost"
             size="sm"
-            className="absolute top-4 right-4 text-gray-600 hover:text-gray-900 hover:bg-gray-200"
+            className="absolute top-3 right-3 text-gray-500 hover:text-gray-800 hover:bg-white/60 text-xs"
           >
-            <LogOut className="w-4 h-4 mr-2" />
-            Usar otra cuenta
+            <LogOut className="w-3.5 h-3.5 mr-1.5" />
+            Otra cuenta
           </Button>
 
-          <div className="mx-auto w-40 h-40 flex items-center justify-center">
+          <div className="mx-auto w-28 h-28 flex items-center justify-center">
             {logoUrl ? (
-              <img
-                src={logoUrl}
-                alt="Logo UNetWork"
-                className="w-40 h-40 object-contain"
-              />
+              <img src={logoUrl} alt="Logo UNetWork" className="w-28 h-28 object-contain" />
             ) : (
-              <div className="w-32 h-32 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-2xl">
-                UNet
+              <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xl">
+                UN
               </div>
             )}
           </div>
-          <div>
-            <CardTitle className="text-2xl font-bold text-blue-800">¡Completa tu perfil! 🎓</CardTitle>
-            <CardDescription className="text-gray-600">
-              ¡Hola {userName}! Cuéntanos un poco más sobre ti para personalizar tu experiencia
+          <div className="space-y-1">
+            <CardTitle className="text-xl sm:text-2xl font-bold text-gray-900">Completa tu perfil</CardTitle>
+            <CardDescription className="text-gray-500 text-sm">
+              Hola {userName}, cuéntanos sobre ti para personalizar tu experiencia
             </CardDescription>
           </div>
         </CardHeader>
 
-        <CardContent className="p-4 sm:p-6 space-y-4">
-          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <User className="w-4 h-4 text-blue-600" />
-              <p className="text-sm font-medium text-blue-800">Información académica</p>
-            </div>
-            <p className="text-sm text-blue-700">
-              Necesitamos saber tu nombre, carrera y año para mostrarte material específico
-            </p>
-          </div>
-
+        <CardContent className="p-5 sm:p-6 space-y-5">
           <div className="space-y-2">
-            <Label className="flex items-center gap-2 font-medium">
+            <Label className="flex items-center gap-2 text-sm font-medium text-gray-700">
               <User className="w-4 h-4 text-blue-500" />
-              ¿Cómo te llamas?
+              Nombre
             </Label>
             <Input
               type="text"
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
-              placeholder="Ingresa tu nombre completo"
-              className="focus:border-blue-500 py-3 text-base"
+              placeholder="Tu nombre completo"
+              className="h-11 text-sm border-gray-200 focus:border-blue-400 focus:ring-blue-400"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="flex items-center gap-2 font-medium">
+            <Label className="flex items-center gap-2 text-sm font-medium text-gray-700">
               <GraduationCap className="w-4 h-4 text-purple-500" />
-              ¿Qué carrera estás estudiando?
+              Carrera
             </Label>
             <Select value={carrera} onValueChange={setCarrera} required>
-              <SelectTrigger className="focus:border-purple-500 py-3 text-base">
+              <SelectTrigger className="h-11 text-sm border-gray-200 focus:border-purple-400">
                 <SelectValue placeholder="Selecciona tu carrera" />
               </SelectTrigger>
               <SelectContent>
                 {CARRERAS.map((c) => (
-                  <SelectItem key={c} value={c}>
-                    {c}
-                  </SelectItem>
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -305,19 +283,17 @@ export function OnboardingForm({
 
           {carrera && (
             <div className="space-y-2">
-              <Label className="flex items-center gap-2 font-medium">
+              <Label className="flex items-center gap-2 text-sm font-medium text-gray-700">
                 <BookOpen className="w-4 h-4 text-orange-500" />
-                ¿En qué año vas?
+                Año
               </Label>
               <Select value={anio} onValueChange={setAnio} required>
-                <SelectTrigger className="focus:border-orange-500 py-3 text-base">
-                  <SelectValue placeholder="Selecciona tu año actual" />
+                <SelectTrigger className="h-11 text-sm border-gray-200 focus:border-orange-400">
+                  <SelectValue placeholder="¿En qué año vas?" />
                 </SelectTrigger>
                 <SelectContent>
                   {AÑOS.map((año) => (
-                    <SelectItem key={año} value={año}>
-                      {getOrdinalYear(año)}
-                    </SelectItem>
+                    <SelectItem key={año} value={año}>{getOrdinalYear(año)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -326,7 +302,7 @@ export function OnboardingForm({
 
           <Button
             onClick={handleCompleteProfile}
-            className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold shadow-lg py-6"
+            className="w-full h-12 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold shadow-md text-sm"
             disabled={isLoading || !nombre.trim() || !carrera || !anio}
           >
             {isLoading ? (
@@ -335,7 +311,7 @@ export function OnboardingForm({
                 Guardando...
               </div>
             ) : (
-              "Continuar ✨"
+              "Continuar"
             )}
           </Button>
         </CardContent>
@@ -343,215 +319,140 @@ export function OnboardingForm({
     )
   }
 
-  if (currentStep === 'interests') {
-    return (
-      <Card className="w-full shadow-xl border-0">
-        <CardHeader className="text-center space-y-4 bg-gradient-to-br from-purple-50 to-blue-50 rounded-t-lg">
-          <div className="mx-auto w-40 h-40 flex items-center justify-center">
-            {logoUrl ? (
-              <img
-                src={logoUrl}
-                alt="Logo UNetWork"
-                className="w-40 h-40 object-contain"
-              />
-            ) : (
-              <div className="w-32 h-32 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-2xl">
-                UNet
-              </div>
-            )}
-          </div>
-          <div>
-            <CardTitle className="text-2xl font-bold text-indigo-800">Personaliza tu experiencia ✨</CardTitle>
-            <CardDescription className="text-gray-600">
-              ¡Hola {userName}! Selecciona tus intereses para que podamos mostrarte contenido relevante
-            </CardDescription>
-          </div>
-        </CardHeader>
-
-        <CardContent className="p-4 sm:p-6 space-y-4">
-          <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <Sparkles className="w-4 h-4 text-indigo-600" />
-              <p className="text-sm font-medium text-indigo-800">Selecciona todo lo que te interese</p>
-            </div>
-            <p className="text-sm text-indigo-700">
-              Esto nos ayudará a personalizar tu experiencia y conectarte con material y compañeros afines.
-            </p>
-          </div>
-
-          {INTEREST_CATEGORIES.map((category) => (
-            <div key={category.name} className="space-y-2">
-              <Label className="flex items-center gap-2 font-medium text-indigo-700">
-                {category.name === "Áreas de Estudio" && <BookOpen className="w-4 h-4 text-indigo-500" />}
-                {category.name === "Tipo de Material" && <FileText className="w-4 h-4 text-purple-500" />}
-                {category.name === "Objetivos" && <Target className="w-4 h-4 text-blue-500" />}
-                {category.name}
-                <InfoTooltip message={
-                  category.name === "Áreas de Estudio" 
-                    ? "Selecciona las áreas académicas que más te interesan para recibir contenido relevante" 
-                    : category.name === "Tipo de Material"
-                      ? "Escoge qué tipo de materiales de estudio prefieres"
-                      : "Define tus objetivos académicos para personalizar tu experiencia"
-                }/>
-              </Label>
-              <div className="flex flex-wrap gap-2">
-                {category.interests.map(interest => (
-                  <Toggle
-                    key={interest}
-                    pressed={selectedInterests.includes(interest)}
-                    onPressedChange={() => toggleInterest(interest)}
-                    className="px-3 py-1.5 rounded-full text-sm data-[state=on]:bg-indigo-500 data-[state=on]:text-white data-[state=off]:bg-gray-100 data-[state=off]:text-gray-700"
-                  >
-                    {selectedInterests.includes(interest) ? `✓ ${interest}` : interest}
-                  </Toggle>
-                ))}
-              </div>
-            </div>
-          ))}
-
-          <div className="space-y-1 pt-2">
-            {selectedInterests.length > 0 ? (
-              <p className="text-sm text-green-600 flex items-center gap-1">
-                <CheckCircle className="w-4 h-4" />
-                Has seleccionado {selectedInterests.length} intereses
-              </p>
-            ) : (
-              <p className="text-sm text-amber-600 flex items-center gap-1">
-                Selecciona al menos un interés para mejorar tus recomendaciones
-              </p>
-            )}
-          </div>
-
-          <div className="flex gap-3 pt-2">
-            <Button
-              onClick={handleSkipInterests}
-              variant="outline"
-              className="flex-1 border-gray-300 hover:bg-gray-50 bg-transparent"
-              disabled={isLoading}
-            >
-              {isLoading ? "Procesando..." : "Omitir este paso"}
-            </Button>
-            <Button
-              onClick={handleCompleteInterests}
-              className="flex-1 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white font-semibold shadow-lg"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <div className="flex items-center gap-2">
-                  <Spinner />
-                  Guardando...
-                </div>
-              ) : (
-                selectedInterests.length > 0 ? "Guardar y continuar" : "Continuar sin seleccionar"
-              )}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  // Subjects step
+  // ============================================================================
+  // SUBJECTS STEP (with search bar)
+  // ============================================================================
   return (
-    <Card className="w-full shadow-xl border-0">
-      <CardHeader className="text-center space-y-4 bg-gradient-to-br from-green-50 to-blue-50 rounded-t-lg">
-        <div className="mx-auto w-40 h-40 flex items-center justify-center">
+    <Card className="w-full shadow-xl border-0 overflow-hidden">
+      <CardHeader className="text-center space-y-3 bg-gradient-to-br from-blue-50 to-purple-50 pb-6">
+        <div className="mx-auto w-28 h-28 flex items-center justify-center">
           {logoUrl ? (
-            <img
-              src={logoUrl}
-              alt="Logo UNetWork"
-              className="w-40 h-40 object-contain"
-            />
+            <img src={logoUrl} alt="Logo UNetWork" className="w-28 h-28 object-contain" />
           ) : (
-            <div className="w-32 h-32 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-2xl">
-              UNet
+            <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xl">
+              UN
             </div>
           )}
         </div>
-        <div>
-          {isExistingUser ? (
-            <>
-              <CardTitle className="text-2xl font-bold text-blue-800">¡Un paso más! 📚</CardTitle>
-              <CardDescription className="text-gray-600">
-                ¡Hola {userName}! Aún no has seleccionado tus ramos. Personaliza tu experiencia eligiendo los ramos que estás cursando para recibir recomendaciones específicas.
-              </CardDescription>
-            </>
-          ) : (
-            <>
-              <CardTitle className="text-2xl font-bold text-green-900">¡Cuenta creada! 🎉</CardTitle>
-              <CardDescription className="text-gray-600">
-                ¡Hola {userName}! Ahora puedes elegir tus ramos para encontrar material específico
-              </CardDescription>
-            </>
-          )}
+        <div className="space-y-1">
+          <CardTitle className="text-xl sm:text-2xl font-bold text-gray-900">
+            {isExistingUser ? "Elige tus ramos" : "Selecciona tus ramos"}
+          </CardTitle>
+          <CardDescription className="text-gray-500 text-sm">
+            {isExistingUser
+              ? `${userName}, personaliza tu experiencia eligiendo los ramos que cursas`
+              : `${userName}, elige tus ramos para encontrar material relevante`
+            }
+          </CardDescription>
         </div>
       </CardHeader>
 
-      <CardContent className="p-4 sm:p-6 space-y-4">
-        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <div className="flex items-center gap-2 mb-2">
-            <BookOpen className="w-4 h-4 text-blue-600" />
-            <p className="text-sm font-medium text-blue-800">Selecciona tus ramos 📚</p>
-          </div>
-          <p className="text-sm text-blue-700">
-            Puedes elegir tus ramos ahora para que te mostremos material específico, o hacerlo después desde tu perfil.
-            ¡Tú decides!
-          </p>
-        </div>
-
-        <div className="space-y-2">
-          <Label className="flex items-center gap-2 font-medium">
-            <BookOpen className="w-4 h-4 text-purple-500" />
-            Ramos disponibles para {carrera}
-          </Label>
-          <div className="max-h-56 sm:max-h-64 overflow-y-auto space-y-3 p-3 sm:p-4 border rounded-lg bg-gray-50">
-            {Object.entries(ramosPorAnio).map(([anio, ramos]) => (
-              <div key={anio} className="space-y-2">
-                <h4 className="font-medium text-sm text-blue-700 border-b border-blue-200 pb-1 flex items-center gap-1">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  Año {anio}
-                </h4>
-                <div className="space-y-1 pl-3">
-                  {ramos.map((ramo) => (
-                    <div key={ramo.id} className="flex items-center space-x-3 py-1">
-                      <Checkbox
-                        id={ramo.id}
-                        checked={ramosSeleccionados.some((r) => r.id === ramo.id)}
-                        onCheckedChange={(checked) => handleRamoChange(ramo, checked as boolean)}
-                        className="data-[state=checked]:bg-purple-500 data-[state=checked]:border-purple-500 w-5 h-5"
-                      />
-                      <Label
-                        htmlFor={ramo.id}
-                        className="text-sm font-normal cursor-pointer hover:text-purple-600 flex-1 py-2"
-                      >
-                        {ramo.nombre}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-          {ramosSeleccionados.length > 0 && (
-            <p className="text-xs text-purple-600 font-medium">
-              ✨ {ramosSeleccionados.length} ramo{ramosSeleccionados.length !== 1 ? "s" : ""} seleccionado
-              {ramosSeleccionados.length !== 1 ? "s" : ""}
-            </p>
+      <CardContent className="p-5 sm:p-6 space-y-4">
+        {/* Search bar */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Input
+            type="text"
+            placeholder="Buscar ramo..."
+            value={ramoSearch}
+            onChange={(e) => setRamoSearch(e.target.value)}
+            className="h-10 pl-9 pr-9 text-sm border-gray-200 focus:border-blue-400 focus:ring-blue-400"
+          />
+          {ramoSearch && (
+            <button
+              type="button"
+              onClick={() => setRamoSearch("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-4 h-4" />
+            </button>
           )}
         </div>
 
-        <div className="flex gap-3">
+        {/* Ramos list */}
+        <div className="space-y-1">
+          <div className="flex items-center justify-between px-1">
+            <Label className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+              Ramos de {carrera}
+            </Label>
+            {ramoSearch && (
+              <span className="text-xs text-gray-400">
+                {filteredRamosCount} de {totalRamosCount}
+              </span>
+            )}
+          </div>
+
+          <div className="max-h-64 sm:max-h-72 overflow-y-auto rounded-lg border border-gray-100 bg-gray-50/50">
+            {Object.entries(filteredRamosPorAnio).length > 0 ? (
+              Object.entries(filteredRamosPorAnio).map(([anioKey, ramos]) => (
+                <div key={anioKey}>
+                  <div className="sticky top-0 z-10 bg-gray-100/95 backdrop-blur-sm px-3 py-1.5 border-b border-gray-200">
+                    <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                      Año {anioKey}
+                    </span>
+                  </div>
+                  <div className="divide-y divide-gray-100">
+                    {ramos.map((ramo) => {
+                      const isSelected = ramosSeleccionados.some((r) => r.id === ramo.id)
+                      return (
+                        <label
+                          key={ramo.id}
+                          htmlFor={ramo.id}
+                          className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors ${
+                            isSelected
+                              ? 'bg-blue-50/80'
+                              : 'hover:bg-gray-50'
+                          }`}
+                        >
+                          <Checkbox
+                            id={ramo.id}
+                            checked={isSelected}
+                            onCheckedChange={(checked) => handleRamoChange(ramo, checked as boolean)}
+                            className="data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500 h-4 w-4 flex-shrink-0"
+                          />
+                          <span className={`text-sm ${isSelected ? 'text-blue-700 font-medium' : 'text-gray-700'}`}>
+                            {ramo.nombre}
+                          </span>
+                        </label>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="px-4 py-8 text-center">
+                <Search className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                <p className="text-sm text-gray-400">
+                  {ramoSearch ? 'No se encontraron ramos' : 'Cargando ramos...'}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Selected count */}
+        {ramosSeleccionados.length > 0 && (
+          <div className="flex items-center gap-1.5 text-sm text-blue-600">
+            <CheckCircle className="w-4 h-4" />
+            <span className="font-medium">
+              {ramosSeleccionados.length} ramo{ramosSeleccionados.length !== 1 ? 's' : ''} seleccionado{ramosSeleccionados.length !== 1 ? 's' : ''}
+            </span>
+          </div>
+        )}
+
+        {/* Action buttons */}
+        <div className="flex gap-3 pt-1">
           <Button
             onClick={handleSkipSubjects}
             variant="outline"
-            className="flex-1 border-gray-300 hover:bg-gray-50 bg-transparent"
+            className="flex-1 h-11 border-gray-200 text-gray-600 hover:bg-gray-50 bg-transparent text-sm"
             disabled={isLoading}
           >
-            {isLoading ? "Procesando..." : "Lo haré después 😊"}
+            Omitir por ahora
           </Button>
           <Button
             onClick={handleCompleteSubjects}
-            className="flex-1 bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700 text-white font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 h-11 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold shadow-md text-sm"
             disabled={isLoading || ramosSeleccionados.length === 0}
           >
             {isLoading ? (
@@ -560,9 +461,9 @@ export function OnboardingForm({
                 Guardando...
               </div>
             ) : ramosSeleccionados.length > 0 ? (
-              `Agregar ${ramosSeleccionados.length} ramo${ramosSeleccionados.length !== 1 ? "s" : ""} 🚀`
+              "Explorar material"
             ) : (
-              "Selecciona al menos un ramo"
+              "Selecciona al menos uno"
             )}
           </Button>
         </div>

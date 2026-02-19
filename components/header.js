@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Bell, Settings, User, LogOut, Home, ThumbsUp, MessageCircle, Star, ChevronDown, Users } from "lucide-react"
+import { Bell, Settings, User, LogOut, Home, ThumbsUp, MessageCircle, Star, ChevronDown } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useUserContext } from "@/context/UserContext" // Añadir esta importación
 import { supabase } from "@/lib/supabaseClient"
@@ -140,26 +140,10 @@ export function Header() {
               <Home className="w-5 h-5" />
             </Button>
 
-            {/* Botón Conectar - versión móvil */}
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={() => router.push("/conectar")} 
-              className="h-10 w-10 rounded-full md:hidden flex items-center justify-center"
-            >
-              <Users className="w-5 h-5" />
-            </Button>
-
             {/* Botón Home con texto solo en desktop */}
             <Button variant="ghost" onClick={() => router.push("/dashboard")} className="hidden md:flex">
               <Home className="w-4 h-4 mr-2" />
               Inicio
-            </Button>
-
-            {/* Botón Conectar con texto solo en desktop */}
-            <Button variant="ghost" onClick={() => router.push("/conectar")} className="hidden md:flex">
-              <Users className="w-4 h-4 mr-2" />
-              Conectar
             </Button>
 
             {/* Menú de usuario con área táctil más grande */}

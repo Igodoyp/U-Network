@@ -6,7 +6,6 @@ import { useUserContext } from "@/context/UserContext"
 import { ProgressIndicator } from "@/components/ui/progress-indicator"
 import { AzureLoginView } from "@/components/auth/AzureLoginView"
 import { OnboardingForm } from "@/components/auth/OnboardingForm"
-import { CompletionCard } from "@/components/auth/CompletionCard"
 import { Button } from "@/components/ui/button"
 import { ONBOARDING_STEPS, OnboardingStepId } from "@/lib/constants"
 import * as authService from "@/lib/authService"
@@ -38,8 +37,6 @@ export default function UNetworkAuth() {
   
   // Estado del flujo de onboarding
   const [currentStep, setCurrentStep] = useState<OnboardingStep>("auth")
-  const [selectedSubjects, setSelectedSubjects] = useState<Ramo[]>([])
-  const [selectedInterests, setSelectedInterests] = useState<string[]>([])
   const [isExistingUser, setIsExistingUser] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [initialCheckDone, setInitialCheckDone] = useState(false)
@@ -154,18 +151,6 @@ export default function UNetworkAuth() {
   }
 
   /**
-   * Guarda los intereses del usuario
-   */
-  const handleSaveIntereses = async (records: { usuario_id: string; interes: string }[]) => {
-    const { error } = await authService.insertUsuariosIntereses(records)
-    if (error) {
-      console.error("Error al guardar intereses:", error)
-      throw error
-    }
-    setSelectedInterests(records.map((r) => r.interes))
-  }
-
-  /**
    * Guarda los ramos seleccionados
    */
   const handleSaveRamos = async (records: { usuario_id: string; ramo_id: string }[]) => {
@@ -174,8 +159,6 @@ export default function UNetworkAuth() {
       console.error("Error al guardar ramos:", error)
       throw error
     }
-    // Guardar IDs de ramos (los nombres vendrán del form)
-    setSelectedSubjects(records.map((r) => ({ id: r.ramo_id, nombre: "Ramo" })))
   }
 
   /**
@@ -211,7 +194,7 @@ export default function UNetworkAuth() {
    * Finaliza el onboarding
    */
   const handleOnboardingFinish = () => {
-    setCurrentStep("complete")
+    router.push("/dashboard")
   }
 
   // ============================================================================
@@ -278,7 +261,7 @@ export default function UNetworkAuth() {
             <div>
               <strong className="text-gray-900">El problema:</strong>
               <p className="mt-2">
-                Entrar a la universidad puede sentirse como llegar a una fiesta donde todos se conocen menos tú. Si no tienes los contactos, no tienes el material. Y si no tienes el material, te aislas estudiando el doble para lograr la mitad.
+                Entrar a la universidad puede sentirse como llegar a una fiesta donde todos se conocen menos tú. Si no tienes los contactos y el profe no sube cosas al canvas, no tienes el material. Y si no tienes el material, te aislas estudiando el doble para lograr la mitad.
               </p>
             </div>
 
@@ -335,13 +318,11 @@ export default function UNetworkAuth() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center p-2 sm:p-4">
       <div className="w-full max-w-lg">
-        {/* Indicador de progreso (solo después del login) */}
-        {currentStep !== "auth" && (
-          <ProgressIndicator steps={ONBOARDING_STEPS} currentStep={currentStep} />
-        )}
+        {/* Indicador de progreso */}
+        <ProgressIndicator steps={ONBOARDING_STEPS} currentStep={currentStep} />
 
-        {/* Steps 2-4: Onboarding (perfil, intereses y ramos) */}
-        {(currentStep === "profile" || currentStep === "interests" || currentStep === "subjects") && userData && (
+        {/* Steps 2-3: Onboarding (perfil y ramos) */}
+        {(currentStep === "profile" || currentStep === "subjects") && userData && (
           <div className="animate-fadeIn">
             <OnboardingForm
               usuarioId={userData.id}
@@ -350,26 +331,13 @@ export default function UNetworkAuth() {
               anioActual={userData.anio}
               needsProfile={!userData.carrera}
               onSaveProfile={handleSaveProfile}
-              onSaveIntereses={handleSaveIntereses}
+              onSaveIntereses={async () => {}}
               onSaveRamos={handleSaveRamos}
               onFinish={handleOnboardingFinish}
               onStepChange={setCurrentStep}
               initialStep={currentStep as any}
-              onSkipIntereses={() => {}}
               onSkipRamos={() => {}}
               isExistingUser={isExistingUser}
-            />
-          </div>
-        )}
-
-        {/* Step 4: Completado */}
-        {currentStep === "complete" && (
-          <div className="animate-fadeIn">
-            <CompletionCard
-              userData={userData}
-              selectedInterests={selectedInterests}
-              selectedSubjects={selectedSubjects}
-              onContinue={() => router.push("/dashboard")}
             />
           </div>
         )}
