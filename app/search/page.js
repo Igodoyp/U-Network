@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import { Button } from "@/components/ui/button"
+import { GlassButton } from "@/components/ui/glass-button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
@@ -35,10 +35,15 @@ function MaterialCard({ material }) {
 
   return (
     <Card
-      className="w-full hover:shadow-md transition-shadow cursor-pointer border-0 shadow-sm"
+      className="glossy-material-card w-full cursor-pointer border-0"
+      style={{
+        background: "rgba(255, 255, 255, 0.28)",
+        backdropFilter: "blur(16px) saturate(185%)",
+        WebkitBackdropFilter: "blur(16px) saturate(185%)",
+      }}
       onClick={() => router.push(`/document/${material.id}`)}
     >
-      <CardContent className="p-3 sm:p-4">
+      <CardContent className="glossy-material-card-content p-3 sm:p-4">
         <div className="flex gap-3 sm:gap-4">
           <div className="flex-shrink-0">
             <div className="w-12 h-16 sm:w-16 sm:h-20 bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg flex items-center justify-center border">
@@ -541,13 +546,13 @@ export default function SearchPage() {
 
   // Botón de filtro con animación suave
   const FilterButton = () => (
-    <Button
+    <GlassButton
       onClick={() => setShowFilters(true)}
       className="fixed z-40 bottom-20 right-4 h-12 w-12 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 flex items-center justify-center md:hidden"
       aria-label="Filtros"
     >
       <Filter className="h-5 w-5 text-white" />
-    </Button>
+    </GlassButton>
   );
 
   // Panel de filtros mejorado para móvil
@@ -559,9 +564,9 @@ export default function SearchPage() {
     >
       <div className="sticky top-0 bg-white z-10 px-4 py-3 flex justify-between items-center border-b">
         <h2 className="text-lg font-semibold">Filtros</h2>
-        <Button variant="ghost" size="sm" onClick={() => setShowFilters(false)} className="lg:hidden">
+        <GlassButton variant="ghost" size="sm" onClick={() => setShowFilters(false)} className="lg:hidden">
           <X className="w-5 h-5" />
-        </Button>
+        </GlassButton>
       </div>
 
       <div className="p-4 space-y-6 pb-20 h-[calc(100%-108px)] overflow-auto">
@@ -571,14 +576,14 @@ export default function SearchPage() {
 
       {/* Botones de acción fijos en la parte inferior */}
       <div className="absolute bottom-0 left-0 w-full sm:w-80 border-t bg-white p-3 flex gap-2">
-        <Button 
+        <GlassButton 
           variant="outline" 
           className="flex-1"
           onClick={() => setShowFilters(false)}
         >
           Cancelar
-        </Button>
-        <Button 
+        </GlassButton>
+        <GlassButton 
           className="flex-1 bg-blue-600"
           onClick={() => {
             applyFilters();
@@ -586,13 +591,18 @@ export default function SearchPage() {
           }}
         >
           Ver {totalResults} resultados
-        </Button>
+        </GlassButton>
       </div>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+    <div
+      className="min-h-screen bg-cover bg-center bg-no-repeat bg-fixed"
+      style={{
+        backgroundImage: "url('https://i.pinimg.com/736x/c6/de/b1/c6deb1f7fe2c888f227a600e1e4e6a47.jpg')",
+      }}
+    >
       <div className="flex flex-col lg:flex-row"> {/* Cambiar a flex-col por defecto */}
         {/* Sidebar de filtros para desktop (visible solo en desktop) */}
         <div className="hidden lg:block lg:w-80 lg:flex-shrink-0">
@@ -623,7 +633,7 @@ export default function SearchPage() {
                 <Label className="text-sm font-medium">Carrera</Label>
                 <Popover open={openCarrera} onOpenChange={setOpenCarrera}>
                   <PopoverTrigger asChild>
-                    <Button
+                    <GlassButton
                       variant="outline"
                       role="combobox"
                       aria-expanded={openCarrera}
@@ -631,7 +641,7 @@ export default function SearchPage() {
                     >
                       {selectedCarreras.length > 0 ? `${selectedCarreras.length} carrera(s)` : "Seleccionar carreras..."}
                       <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
+                    </GlassButton>
                   </PopoverTrigger>
                   <PopoverContent 
                     className="w-72 p-0" 
@@ -671,7 +681,7 @@ export default function SearchPage() {
                 <Label className="text-sm font-medium">Ramo</Label>
                 <Popover open={openRamo} onOpenChange={selectedCarreras.length > 0 ? setOpenRamo : undefined}>
                   <PopoverTrigger asChild>
-                    <Button
+                    <GlassButton
                       variant="outline"
                       role="combobox"
                       aria-expanded={openRamo}
@@ -682,7 +692,7 @@ export default function SearchPage() {
                         ? "Selecciona primero una carrera" 
                         : "Seleccionar ramo...")}
                       <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
+                    </GlassButton>
                   </PopoverTrigger>
                   <PopoverContent className="w-full p-0">
                     <Command>
@@ -710,7 +720,7 @@ export default function SearchPage() {
                 <Label className="text-sm font-medium">Profesor</Label>
                 <Popover open={openProfesor} onOpenChange={setOpenProfesor}>
                   <PopoverTrigger asChild>
-                    <Button
+                    <GlassButton
                       variant="outline"
                       role="combobox"
                       aria-expanded={openProfesor}
@@ -718,7 +728,7 @@ export default function SearchPage() {
                     >
                       {selectedProfesores.length > 0 ? `${selectedProfesores.length} profesor(es)` : "Seleccionar profesores..."}
                       <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
+                    </GlassButton>
                   </PopoverTrigger>
                   <PopoverContent className="w-full p-0">
                     <Command>
@@ -789,12 +799,12 @@ export default function SearchPage() {
               </div>
 
               {/* Botón aplicar filtros */}
-              <Button
+              <GlassButton
                 onClick={applyFilters}
                 className="w-full bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700 text-white font-semibold"
               >
                 Mostrar {totalResults} resultado{totalResults !== 1 ? "s" : ""}
-              </Button>
+              </GlassButton>
             </div>
           </div>
         </div>
@@ -824,14 +834,14 @@ export default function SearchPage() {
                     </button>
                   )}
                 </div>
-                <Button
+                <GlassButton
                   variant="outline"
                   onClick={() => setShowFilters(true)}
                   className="flex items-center gap-2 lg:hidden"
                 >
                   <Filter className="w-4 h-4" />
                   Filtros
-                </Button>
+                </GlassButton>
               </div>
             </div>
           </div>
@@ -907,14 +917,14 @@ export default function SearchPage() {
                   ))}
 
                   {/* Limpiar todos los filtros */}
-                  <Button
+                  <GlassButton
                     variant="ghost"
                     size="sm"
                     onClick={clearAllFilters}
                     className="text-red-600 hover:text-red-700"
                   >
                     Limpiar todos
-                  </Button>
+                  </GlassButton>
                 </div>
               </div>
             </div>
@@ -950,9 +960,9 @@ export default function SearchPage() {
                 {/* Paginación */}
                 {endIndex < totalResults && (
                   <div className="text-center py-8">
-                    <Button onClick={loadMoreResults} variant="outline" className="bg-transparent">
+                    <GlassButton onClick={loadMoreResults} variant="outline" className="bg-transparent">
                       Cargar más resultados ({Math.max(totalResults - endIndex, 0)} restantes)
-                    </Button>
+                    </GlassButton>
                   </div>
                 )}
 
@@ -976,9 +986,9 @@ export default function SearchPage() {
         >
           <div className="sticky top-0 bg-white z-10 px-4 py-3 flex justify-between items-center border-b">
             <h2 className="text-lg font-semibold">Filtros</h2>
-            <Button variant="ghost" size="sm" onClick={() => setShowFilters(false)} className="lg:hidden">
+            <GlassButton variant="ghost" size="sm" onClick={() => setShowFilters(false)} className="lg:hidden">
               <X className="w-5 h-5" />
-            </Button>
+            </GlassButton>
           </div>
 
           <div className="p-4 space-y-6 pb-20 h-[calc(100%-108px)] overflow-auto">
@@ -1001,14 +1011,14 @@ export default function SearchPage() {
             {/* Carrera - CORREGIDO */}
             <div className="space-y-3">
               <Label className="text-sm font-medium">Carrera</Label>
-              <Button
+              <GlassButton
                 variant="outline"
                 className="w-full justify-between bg-transparent"
                 onClick={() => setShowCarreraModal(true)}
               >
                 {selectedCarreras.length > 0 ? `${selectedCarreras.length} carrera(s)` : "Seleccionar carreras..."}
                 <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
+              </GlassButton>
               
               {selectedCarreras.length > 0 && (
                 <div className="flex flex-wrap gap-2">
@@ -1061,7 +1071,7 @@ export default function SearchPage() {
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button onClick={() => setShowCarreraModal(false)}>Aplicar</Button>
+                    <GlassButton onClick={() => setShowCarreraModal(false)}>Aplicar</GlassButton>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
@@ -1070,7 +1080,7 @@ export default function SearchPage() {
             {/* Ramo - TAMBIÉN CORREGIDO */}
             <div className="space-y-3">
               <Label className="text-sm font-medium">Ramo</Label>
-              <Button
+              <GlassButton
                 variant="outline"
                 className="w-full justify-between bg-transparent"
                 onClick={() => setShowRamoModal(true)}
@@ -1080,7 +1090,7 @@ export default function SearchPage() {
                   ? "Selecciona primero una carrera" 
                   : "Seleccionar ramo...")}
                 <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
+              </GlassButton>
               
               <Dialog open={showRamoModal} onOpenChange={setShowRamoModal}>
                 <DialogContent className="sm:max-w-[425px]">
@@ -1129,7 +1139,7 @@ export default function SearchPage() {
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button onClick={() => setShowRamoModal(false)}>Aplicar</Button>
+                    <GlassButton onClick={() => setShowRamoModal(false)}>Aplicar</GlassButton>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
@@ -1138,14 +1148,14 @@ export default function SearchPage() {
             {/* Profesor - CORREGIDO */}
             <div className="space-y-3">
               <Label className="text-sm font-medium">Profesor</Label>
-              <Button
+              <GlassButton
                 variant="outline"
                 className="w-full justify-between bg-transparent"
                 onClick={() => setShowProfesorModal(true)}
               >
                 {selectedProfesores.length > 0 ? `${selectedProfesores.length} profesor(es)` : "Seleccionar profesores..."}
                 <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
+              </GlassButton>
               
               {selectedProfesores.length > 0 && (
                 <div className="flex flex-wrap gap-2">
@@ -1198,7 +1208,7 @@ export default function SearchPage() {
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button onClick={() => setShowProfesorModal(false)}>Aplicar</Button>
+                    <GlassButton onClick={() => setShowProfesorModal(false)}>Aplicar</GlassButton>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
@@ -1247,14 +1257,14 @@ export default function SearchPage() {
 
           {/* Botones de acción fijos en la parte inferior */}
           <div className="absolute bottom-0 left-0 w-full sm:w-80 border-t bg-white p-3 flex gap-2">
-            <Button 
+            <GlassButton 
               variant="outline" 
               className="flex-1"
               onClick={() => setShowFilters(false)}
             >
               Cancelar
-            </Button>
-            <Button 
+            </GlassButton>
+            <GlassButton 
               className="flex-1 bg-blue-600"
               onClick={() => {
                 applyFilters();
@@ -1262,7 +1272,7 @@ export default function SearchPage() {
               }}
             >
               Ver {totalResults} resultados
-            </Button>
+            </GlassButton>
           </div>
         </div>
       </div>

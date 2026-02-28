@@ -64,7 +64,7 @@ export function FeedbackButton() {
     <>
       <Button
         onClick={() => setOpen(true)}
-        className="fixed bottom-20 right-4 sm:bottom-6 sm:right-6 rounded-full w-12 h-12 sm:w-14 sm:h-14 shadow-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 p-0 z-40"
+        className="fixed bottom-20 right-4 sm:bottom-6 sm:right-6 rounded-full w-12 h-12 sm:w-14 sm:h-14 p-0 z-40 text-white border-white/45 bg-gradient-to-r from-fuchsia-500 via-purple-500 to-blue-500 hover:from-fuchsia-400 hover:via-purple-500 hover:to-blue-400 shadow-[0_5px_14px_rgba(147,51,234,0.22)] hover:shadow-[0_8px_16px_rgba(147,51,234,0.28)] active:from-gray-300 active:via-gray-300 active:to-gray-300 active:text-gray-900 active:shadow-[0_2px_6px_rgba(89,74,56,0.10)]"
       >
         <MessageSquarePlus className="h-6 w-6" />
       </Button>

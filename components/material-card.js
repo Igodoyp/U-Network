@@ -5,10 +5,10 @@ import { FileText, ThumbsUp, BookOpen, User, Calendar, Tag } from "lucide-react"
 export function MaterialCard({ material, onClick }) {
   return (
     <Card
-      className="w-full hover:shadow-md transition-shadow cursor-pointer border-0 shadow-sm"
+      className="glossy-material-card w-full cursor-pointer border-0"
       onClick={onClick}
     >
-      <CardContent className="p-3 sm:p-4">
+      <CardContent className="glossy-material-card-content p-3 sm:p-4">
         <div className="flex gap-2 sm:gap-4">
           {/* Preview más pequeño en móvil */}
           <div className="flex-shrink-0">

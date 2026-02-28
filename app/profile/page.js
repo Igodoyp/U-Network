@@ -743,8 +743,8 @@ function MaterialCard({ material, onDelete }) {
   };
 
   return (
-    <Card className="hover:shadow-md transition-shadow cursor-pointer">
-      <CardContent className="p-3 sm:p-4">
+    <Card className="glossy-material-card cursor-pointer border-0">
+      <CardContent className="glossy-material-card-content p-3 sm:p-4">
         <div className="flex gap-3 sm:gap-4">
           <div 
             className="flex-1 min-w-0 space-y-1 sm:space-y-2"

@@ -1,7 +1,7 @@
 "use client"
 
 import { usePathname, useRouter } from "next/navigation"
-import { Home, Search, Upload, User, Users } from "lucide-react" // Reemplazamos Settings por Users
+import { Home, Search, Upload, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -9,12 +9,10 @@ export function MobileNav() {
   const router = useRouter()
   const pathname = usePathname()
 
-  // Reemplazamos "Config" por "Conectar"
   const navItems = [
     { icon: Home, label: "Inicio", path: "/dashboard", id: "home" },
     { icon: Search, label: "Buscar", path: "/search", id: "search" },
     { icon: Upload, label: "Subir", path: "/upload", id: "upload" },
-    { icon: Users, label: "Conectar", path: "/conectar", id: "conectar" }, // Nuevo ítem de Conectar
     { icon: User, label: "Perfil", path: "/profile", id: "profile" }
   ]
 

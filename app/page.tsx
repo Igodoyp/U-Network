@@ -31,6 +31,9 @@ type OnboardingStep = OnboardingStepId
 export default function UNetworkAuth() {
   const router = useRouter()
   const { userData: contextUserData, setUserData: setContextUserData } = useUserContext()
+  const aeroFontStyle = {
+    fontFamily: "'Avenir Next', 'Frutiger', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif",
+  }
   
   // Estado local del usuario para esta página
   const [userData, setUserData] = useState(contextUserData)
@@ -204,10 +207,15 @@ export default function UNetworkAuth() {
   // Mostrar loading mientras se verifica la sesión
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center">
-        <div className="text-center space-y-4">
+      <div className="relative min-h-screen flex items-center justify-center overflow-hidden" style={aeroFontStyle}>
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat bg-fixed"
+          style={{ backgroundImage: "url('https://i.pinimg.com/736x/c6/de/b1/c6deb1f7fe2c888f227a600e1e4e6a47.jpg')" }}
+        />
+        <div className="absolute inset-0 bg-white/25 backdrop-blur-[3px]" />
+        <div className="relative z-10 text-center space-y-4">
           <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="text-gray-600 font-medium">Cargando...</p>
+          <p className="text-gray-800 font-medium">Cargando...</p>
         </div>
       </div>
     )
@@ -227,8 +235,13 @@ export default function UNetworkAuth() {
   // Si estamos en auth (antes de login), mostrar H1, H2 y botón
   if (currentStep === "auth") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center p-4 sm:p-6">
-        <div className="w-full max-w-2xl space-y-8">
+      <div className="relative min-h-screen flex items-center justify-center p-4 sm:p-6 overflow-hidden" style={aeroFontStyle}>
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat bg-fixed"
+          style={{ backgroundImage: "url('https://i.pinimg.com/736x/c6/de/b1/c6deb1f7fe2c888f227a600e1e4e6a47.jpg')" }}
+        />
+        <div className="absolute inset-0 bg-white/25 backdrop-blur-[3px]" />
+        <div className="relative z-10 w-full max-w-2xl space-y-8">
           {/* H1 */}
           <div className="text-center">
             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
@@ -238,7 +251,7 @@ export default function UNetworkAuth() {
 
           {/* H2 */}
           <div className="text-center">
-            <h2 className="text-xl md:text-2xl font-semibold text-gray-700 leading-relaxed">
+            <h2 className="text-xl md:text-2xl font-semibold text-gray-900 leading-relaxed">
               democratizamos el acceso al material de estudio para derribar barreras. 
             </h2>
           </div>
@@ -247,17 +260,17 @@ export default function UNetworkAuth() {
           <div>
             <Button
               type="button"
-              className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-6 rounded-lg shadow-lg transition-all transform hover:scale-[1.02] text-lg"
+              className="w-full text-white font-semibold py-6 rounded-lg border-white/45 bg-gradient-to-r from-fuchsia-500 via-purple-500 to-blue-500 hover:from-fuchsia-400 hover:via-purple-500 hover:to-blue-400 shadow-[0_5px_14px_rgba(147,51,234,0.22)] hover:shadow-[0_8px_16px_rgba(147,51,234,0.28)] active:from-gray-300 active:via-gray-300 active:to-gray-300 active:text-gray-900 active:shadow-[0_2px_6px_rgba(89,74,56,0.10)]"
               onClick={handleUDDLogin}
               disabled={isLoading || isSigningIn}
             >
               <GraduationCap className="w-5 h-5 mr-2" />
-              {isSigningIn ? "Redirigiendo..." : "Continuar con cuenta UDD"}
+              {isSigningIn ? "Redirigiendo..." : "Continuar con correo institucional"}
             </Button>
           </div>
 
           {/* Resto del manifiesto */}
-          <div className="space-y-6 text-gray-700 border-t pt-8">
+          <div className="space-y-6 text-gray-900 border-t pt-8">
             <div>
               <strong className="text-gray-900">El problema:</strong>
               <p className="mt-2">
@@ -306,7 +319,7 @@ export default function UNetworkAuth() {
               </p>
             </div>
 
-            <div className="italic text-center text-sm border-t pt-4">
+            <div className="italic text-center text-sm text-gray-800 border-t pt-4">
               "El conocimiento crece cuando se comparte, y nosotros crecemos cuando ayudamos." Unetwork: Comunidad, Estudio y Colaboración.
             </div>
           </div>
@@ -316,8 +329,13 @@ export default function UNetworkAuth() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center p-2 sm:p-4">
-      <div className="w-full max-w-lg">
+    <div className="relative min-h-screen flex items-center justify-center p-2 sm:p-4 overflow-hidden" style={aeroFontStyle}>
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat bg-fixed"
+        style={{ backgroundImage: "url('https://i.pinimg.com/736x/c6/de/b1/c6deb1f7fe2c888f227a600e1e4e6a47.jpg')" }}
+      />
+      <div className="absolute inset-0 bg-white/25 backdrop-blur-[3px]" />
+      <div className="relative z-10 w-full max-w-lg">
         {/* Indicador de progreso */}
         <ProgressIndicator steps={ONBOARDING_STEPS} currentStep={currentStep} />
 

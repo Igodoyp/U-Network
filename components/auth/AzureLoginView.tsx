@@ -45,7 +45,13 @@ export function AzureLoginView({ isLoading = false }: AzureLoginViewProps) {
 
   // Renderiza la tarjeta de login con branding, botón y mensajes
   return (
-    <Card className="w-full shadow-xl border-0">
+    <div className="relative overflow-hidden rounded-lg">
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: "url('https://i.pinimg.com/736x/c6/de/b1/c6deb1f7fe2c888f227a600e1e4e6a47.jpg')" }}
+      />
+      <div className="absolute inset-0 bg-white/25 backdrop-blur-[3px]" />
+      <Card className="relative z-10 w-full shadow-xl border-0 bg-white/80">
       {/* Encabezado con logo y bienvenida */}
       <CardHeader className="text-center space-y-4 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 rounded-t-lg">
         <div className="mx-auto w-32 h-32 flex items-center justify-center">
@@ -84,7 +90,7 @@ export function AzureLoginView({ isLoading = false }: AzureLoginViewProps) {
         {/* Botón para iniciar sesión con Azure/UDD */}
         <Button
           type="button"
-          className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-6 rounded-lg shadow-lg transition-all transform hover:scale-[1.02]"
+          className="w-full text-white font-semibold py-6 rounded-lg border-white/45 bg-gradient-to-r from-fuchsia-500 via-purple-500 to-blue-500 hover:from-fuchsia-400 hover:via-purple-500 hover:to-blue-400 shadow-[0_5px_14px_rgba(147,51,234,0.22)] hover:shadow-[0_8px_16px_rgba(147,51,234,0.28)] active:from-gray-300 active:via-gray-300 active:to-gray-300 active:text-gray-900 active:shadow-[0_2px_6px_rgba(89,74,56,0.10)] transition-all transform hover:scale-[1.02]"
           onClick={handleUDDLogin}
           disabled={isLoading || isSigningIn}
         >
@@ -103,6 +109,7 @@ export function AzureLoginView({ isLoading = false }: AzureLoginViewProps) {
           </p>
         </div>
       </CardContent>
-    </Card>
+      </Card>
+    </div>
   )
 }

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
+import { GlassButton } from "@/components/ui/glass-button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Search, Upload, ThumbsUp, FileText, BookOpen, User, Calendar, Tag } from "lucide-react"
@@ -14,10 +14,15 @@ function MaterialCard({ material, showRecommendedTag = false }) {
 
     return (
         <Card
-            className="w-full hover:shadow-md transition-shadow cursor-pointer border-0 shadow-sm"
+            className="glossy-material-card w-full cursor-pointer border-0"
+            style={{
+                background: "rgba(255, 255, 255, 0.28)",
+                backdropFilter: "blur(16px) saturate(185%)",
+                WebkitBackdropFilter: "blur(16px) saturate(185%)",
+            }}
             onClick={() => router.push(`/document/${material.id}`)}
         >
-            <CardContent className="p-3 sm:p-4">
+            <CardContent className="glossy-material-card-content p-3 sm:p-4">
                 <div className="flex gap-3 sm:gap-4">
                     {/* Preview del documento */}
                     <div className="flex-shrink-0">
@@ -296,7 +301,12 @@ export default function Dashboard() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+        <div
+            className="min-h-screen bg-cover bg-center bg-no-repeat bg-fixed"
+            style={{
+                backgroundImage: "url('https://i.pinimg.com/736x/c6/de/b1/c6deb1f7fe2c888f227a600e1e4e6a47.jpg')",
+            }}
+        >
             {/* Header con búsqueda y botón subir */}
             <div className="bg-white shadow-sm border-b sticky top-16 sm:top-28 z-10">
                 <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4">
@@ -315,14 +325,14 @@ export default function Dashboard() {
                         </form>
 
                         {/* Botón subir material */}
-                        <Button
+                        <GlassButton
                             onClick={() => router.push("/upload")}
-                            className="bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700 text-white font-semibold px-3 sm:px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 whitespace-nowrap text-sm"
+                            className="font-semibold px-3 sm:px-4 py-2 rounded-lg flex items-center gap-2 whitespace-nowrap text-sm text-white border-white/45 bg-gradient-to-r from-fuchsia-500 via-purple-500 to-blue-500 hover:from-fuchsia-400 hover:via-purple-500 hover:to-blue-400 shadow-[0_5px_14px_rgba(147,51,234,0.22)] hover:shadow-[0_8px_16px_rgba(147,51,234,0.28)] active:from-gray-300 active:via-gray-300 active:to-gray-300 active:text-gray-900 active:shadow-[0_2px_6px_rgba(89,74,56,0.10)]"
                         >
                             <Upload className="w-4 h-4" />
                             <span className="hidden sm:inline">Subir material</span>
                             <span className="sm:hidden">Subir</span>
-                        </Button>
+                        </GlassButton>
                     </div>
                 </div>
             </div>
@@ -332,26 +342,28 @@ export default function Dashboard() {
                 {/* Tabs del feed */}
                 <div className="mb-4 sm:mb-6">
                     <div className="flex gap-1 bg-gray-100 p-1 rounded-lg w-fit">
-                        <button
+                        <GlassButton
+                            variant="ghost"
                             onClick={() => setActiveTab("recommended")}
                             className={`px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-all ${
                                 activeTab === "recommended"
-                                    ? "bg-white text-blue-600 shadow-sm"
-                                    : "text-gray-600 hover:text-gray-900"
+                                    ? "bg-white/80 text-blue-700 shadow-[0_1px_5px_rgba(89,74,56,0.08)] before:opacity-0 after:shadow-none active:bg-gray-200 active:shadow-none"
+                                    : "bg-transparent shadow-none border-transparent text-gray-600 hover:text-gray-900 hover:bg-white/40 before:opacity-0 after:shadow-none active:bg-gray-200 active:text-gray-800 active:shadow-none"
                             }`}
                         >
                             🌟 Recomendados
-                        </button>
-                        <button
+                        </GlassButton>
+                        <GlassButton
+                            variant="ghost"
                             onClick={() => setActiveTab("recent")}
                             className={`px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-all ${
                                 activeTab === "recent"
-                                    ? "bg-white text-blue-600 shadow-sm"
-                                    : "text-gray-600 hover:text-gray-900"
+                                    ? "bg-white/80 text-blue-700 shadow-[0_1px_5px_rgba(89,74,56,0.08)] before:opacity-0 after:shadow-none active:bg-gray-200 active:shadow-none"
+                                    : "bg-transparent shadow-none border-transparent text-gray-600 hover:text-gray-900 hover:bg-white/40 before:opacity-0 after:shadow-none active:bg-gray-200 active:text-gray-800 active:shadow-none"
                             }`}
                         >
                             🕒 Más recientes
-                        </button>
+                        </GlassButton>
                     </div>
                 </div>
 
@@ -384,14 +396,14 @@ export default function Dashboard() {
                                             Añade tus ramos actuales en tu perfil para ver material específico para tus clases.
                                         </p>
                                         <div className="mt-2">
-                                            <Button 
+                                            <GlassButton 
                                                 variant="outline" 
                                                 size="sm" 
-                                                className="bg-white border-yellow-300 text-yellow-700 hover:bg-yellow-50"
+                                                className="bg-white/70 border-yellow-300 text-yellow-700 hover:bg-yellow-50"
                                                 onClick={() => router.push('/profile')}
                                             >
                                                 Configurar ramos
-                                            </Button>
+                                            </GlassButton>
                                         </div>
                                     </div>
                                 </div>
@@ -414,13 +426,13 @@ export default function Dashboard() {
                         </div>
                         <h3 className="text-xl font-medium text-gray-700 mb-2">No hay material disponible</h3>
                         <p className="text-gray-500 mb-6">¡Sé el primero en subir material para compartir!</p>
-                        <Button
+                        <GlassButton
                             onClick={() => router.push("/upload")}
-                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                            className="text-gray-900"
                         >
                             <Upload className="w-4 h-4 mr-2" />
                             Subir material
-                        </Button>
+                        </GlassButton>
                     </div>
                 )}
 
