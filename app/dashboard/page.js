@@ -331,7 +331,7 @@ export default function Dashboard() {
                         >
                             <Upload className="w-4 h-4" />
                             <span className="hidden sm:inline">Subir material</span>
-                            <span className="sm:hidden">Subir</span>
+                            <span className="sm:hidden">Subir ✨</span>
                         </GlassButton>
                     </div>
                 </div>
@@ -439,8 +439,8 @@ export default function Dashboard() {
                 {/* Mensaje de carga más contenido */}
                 {materials.length > 0 && (
                     <div className="text-center py-8">
-                        <p className="text-gray-500 text-sm">¡Has visto todo por ahora! 🎉</p>
-                        <p className="text-gray-400 text-xs mt-1">Vuelve pronto para más material</p>
+                        <p className="text-gray-900 text-sm">¡Eso es todo!</p>
+                        <p className="text-gray- 600 text-xs mt-2">Vuelve pronto para más material... O súbelo tú mismo ;)</p>
                     </div>
                 )}
             </div>

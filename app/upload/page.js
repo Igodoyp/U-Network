@@ -927,12 +927,63 @@ export default function UploadPage() {
               </CardContent>
             </Card>
 
-            {/* Texto informativo fuera del cuadro blanco, antes del botón */}
-            <div className="mt-4">
-              <p className="text-sm text-gray-500 text-center">
-                Sube material de apoyo académico (evaluaciones anteriores, apuntes, guías).<br />
-                <span className="font-medium">No subas libros comerciales ni archivos con datos personales de terceros.</span>
-              </p>
+            {/* Reglas de contenido permitido y no permitido */}
+            <div className="mt-4 space-y-3">
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <div className="p-1">
+                  <h4 className="text-sm font-semibold text-green-800">Sí puedes subir</h4>
+                  <ul className="mt-2 space-y-2 text-sm text-green-700">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
+                      <span>Certámenes, guías, etc.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
+                      <span>Apuntes o resúmenes hechos por estudiantes.</span>
+                    </li>
+                    {/* <li className="flex items-start gap-2">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
+                      <span>Material propio o autorizado por su autor.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
+                      <span>Formularios y material de apoyo para estudiar.</span>
+                    </li> */}
+                  </ul>
+                </div>
+
+                <div className="p-1">
+                  <h4 className="text-sm font-semibold text-red-800">No puedes subir</h4>
+                  <ul className="mt-2 space-y-2 text-sm text-red-700">
+                    <li className="flex items-start gap-2">
+                      <X className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
+                      <span>Libros comerciales escaneados o protegidos por copyright.</span>
+                    </li>
+                    {/* <li className="flex items-start gap-2">
+                      <X className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
+                      <span>Archivos con datos personales de terceros.</span>
+                    </li> */}
+                    {/* <li className="flex items-start gap-2">
+                      <X className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
+                      <span>Material sin permiso del autor original.</span>
+                    </li> */}
+                    <li className="flex items-start gap-2">
+                      <X className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
+                      <span>Contenido ajeno al contexto académico o que infrinja normas.</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="px-1 py-1 text-sm text-amber-900">
+                <p className="flex items-start gap-2">
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
+                  <span>
+                    <span className="font-semibold">Importante:</span> eres responsable de los derechos y permisos del material que compartes.
+                    Al subir archivos, declaras que tienes autorización para publicarlos.
+                  </span>
+                </p>
+              </div>
             </div>
 
             <div className="flex justify-end mt-6">

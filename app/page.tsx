@@ -6,7 +6,7 @@ import { useUserContext } from "@/context/UserContext"
 import { ProgressIndicator } from "@/components/ui/progress-indicator"
 import { AzureLoginView } from "@/components/auth/AzureLoginView"
 import { OnboardingForm } from "@/components/auth/OnboardingForm"
-import { Button } from "@/components/ui/button"
+import { GlassButton } from "@/components/ui/glass-button"
 import { ONBOARDING_STEPS, OnboardingStepId } from "@/lib/constants"
 import * as authService from "@/lib/authService"
 import { supabase } from "@/lib/supabaseClient"
@@ -258,15 +258,15 @@ export default function UNetworkAuth() {
 
           {/* Botón de login */}
           <div>
-            <Button
+            <GlassButton
               type="button"
-              className="w-full text-white font-semibold py-6 rounded-lg border-white/45 bg-gradient-to-r from-fuchsia-500 via-purple-500 to-blue-500 hover:from-fuchsia-400 hover:via-purple-500 hover:to-blue-400 shadow-[0_5px_14px_rgba(147,51,234,0.22)] hover:shadow-[0_8px_16px_rgba(147,51,234,0.28)] active:from-gray-300 active:via-gray-300 active:to-gray-300 active:text-gray-900 active:shadow-[0_2px_6px_rgba(89,74,56,0.10)]"
+              className="w-full justify-center font-semibold px-3 sm:px-4 py-4 rounded-lg flex items-center gap-2 whitespace-nowrap text-sm text-white border-white/45 bg-gradient-to-r from-fuchsia-500 via-purple-500 to-blue-500 hover:from-fuchsia-400 hover:via-purple-500 hover:to-blue-400 shadow-[0_5px_14px_rgba(147,51,234,0.22)] hover:shadow-[0_8px_16px_rgba(147,51,234,0.28)] active:from-gray-300 active:via-gray-300 active:to-gray-300 active:text-gray-900 active:shadow-[0_2px_6px_rgba(89,74,56,0.10)]"
               onClick={handleUDDLogin}
               disabled={isLoading || isSigningIn}
             >
-              <GraduationCap className="w-5 h-5 mr-2" />
+              <GraduationCap className="w-5 h-5" />
               {isSigningIn ? "Redirigiendo..." : "Continuar con correo institucional"}
-            </Button>
+            </GlassButton>
           </div>
 
           {/* Resto del manifiesto */}
@@ -316,6 +316,13 @@ export default function UNetworkAuth() {
               <strong className="text-gray-900 block mb-2">¿Eres mechón?</strong>
               <p className="text-sm">
                 Bienvenido a tu red de apoyo. Olvídate del miedo a quedarte atrás por no estar en el grupo de WhatsApp "correcto". Aquí partes con las mismas herramientas que el resto. Úsalo, aprende y, cuando domines el ramo, devuélvele la mano a la siguiente generación.
+              </p>
+            </div>
+
+            <div>
+              <strong className="text-gray-900">Disclaimer:</strong>
+              <p className="mt-2 text-sm">
+                OJO! Practicar con evaluaciones es sólo una parte del aprendizaje. No olivdes ir a clases y apoyarte principalmente en el material entregado por tu profesor ;)
               </p>
             </div>
 

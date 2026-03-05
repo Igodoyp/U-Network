@@ -8,7 +8,12 @@ export function Footer() {
         <p className="text-sm text-gray-600">
           Unetwork es una iniciativa estudiantil independiente. No tenemos afiliación oficial con la Universidad del Desarrollo (UDD).
         </p>
+        
         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="mt-3 text-xs text-gray-500">UNetwork v0.1 (Beta)</p>
+          <p className="text-sm text-gray-600">
+            Contacto: <a href="mailto:unetwork.cl@gmail.com" className="text-blue-600 hover:text-blue-700">unetwork.cl@gmail.com</a>
+          </p>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
             <Link href="/terms" className="text-sm text-blue-600 hover:text-blue-700">
               Términos y condiciones
@@ -17,7 +22,7 @@ export function Footer() {
               About us
             </Link>
           </div>
-          <div className="flex items-center gap-2 text-sm text-gray-600">
+          {/* <div className="flex items-center gap-2 text-sm text-gray-600">
             <span>Desarrollado por Ignacio Godoy</span>
             <Link
               href="https://www.linkedin.com/in/ignacio-godoy-77732735a/"
@@ -28,7 +33,7 @@ export function Footer() {
             >
               <Linkedin className="h-4 w-4" />
             </Link>
-          </div>
+          </div> */}
         </div>
       </div>
     </footer>

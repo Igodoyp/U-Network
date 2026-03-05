@@ -228,7 +228,7 @@ export function OnboardingForm({
             className="absolute top-3 right-3 text-gray-500 hover:text-gray-800 hover:bg-white/60 text-xs"
           >
             <LogOut className="w-3.5 h-3.5 mr-1.5" />
-            Otra cuenta
+            Cambiar de cuenta
           </Button>
 
           <div className="mx-auto w-28 h-28 flex items-center justify-center">
@@ -241,7 +241,7 @@ export function OnboardingForm({
             )}
           </div>
           <div className="space-y-1">
-            <CardTitle className="text-xl sm:text-2xl font-bold text-gray-900">Completa tu perfil</CardTitle>
+            <CardTitle className="text-xl sm:text-2xl font-bold text-gray-900">¡Completa tu perfil!</CardTitle>
             <CardDescription className="text-gray-500 text-sm">
               Hola {userName}, cuéntanos sobre ti para personalizar tu experiencia
             </CardDescription>
@@ -252,7 +252,7 @@ export function OnboardingForm({
           <div className="space-y-2">
             <Label className="flex items-center gap-2 text-sm font-medium text-gray-700">
               <User className="w-4 h-4 text-blue-500" />
-              Nombre
+              Nombre (y apellido)
             </Label>
             <Input
               type="text"
@@ -271,7 +271,7 @@ export function OnboardingForm({
             </Label>
             <Select value={carrera} onValueChange={setCarrera} required>
               <SelectTrigger className="h-11 text-sm border-gray-200 focus:border-purple-400">
-                <SelectValue placeholder="Selecciona tu carrera" />
+                <SelectValue placeholder="Qué estudias?" />
               </SelectTrigger>
               <SelectContent>
                 {CARRERAS.map((c) => (
@@ -336,12 +336,12 @@ export function OnboardingForm({
         </div>
         <div className="space-y-1">
           <CardTitle className="text-xl sm:text-2xl font-bold text-gray-900">
-            {isExistingUser ? "Elige tus ramos" : "Selecciona tus ramos"}
+            {isExistingUser ? "Elige tus ramos" : "Selecciona tus ramos actuales"}
           </CardTitle>
           <CardDescription className="text-gray-500 text-sm">
             {isExistingUser
               ? `${userName}, personaliza tu experiencia eligiendo los ramos que cursas`
-              : `${userName}, elige tus ramos para encontrar material relevante`
+              : `Elige tus ramos para recomendarte material relevante :)`
             }
           </CardDescription>
         </div>

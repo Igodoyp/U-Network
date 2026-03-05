@@ -1,3 +1,6 @@
+import Link from "next/link"
+import { Linkedin } from "lucide-react"
+
 export default function AboutPage() {
   return (
     <div className="min-h-screen bg-white">
@@ -35,8 +38,23 @@ export default function AboutPage() {
         </div>
 
         <p className="text-sm text-gray-700 leading-relaxed">
-          Este proyecto nació del vibe coding y de aprender sobre la marcha (literalmente aprendí a programar el año pasado para hacer esto). Quizás el código no sea perfecto todavía, pero es la demostración de que con curiosidad y tecnología, podemos resolver problemas reales.
+          Este proyecto nació de aprender sobre la marcha (literalmente aprendí a programar el año pasado para hacer esto :p). Quizás el código no sea perfecto todavía, pero es la demostración de que con un poquito de curiosidad y creatividad podemos resolver problemas reales.
         </p>
+
+        <div className="pt-2">
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <span>Made by Ignacio Godoy</span>
+            <Link
+              href="https://www.linkedin.com/in/ignacio-godoy-77732735a/"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="LinkedIn de Ignacio Godoy"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 text-blue-600 hover:text-blue-700"
+            >
+              <Linkedin className="h-4 w-4" />
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   )
