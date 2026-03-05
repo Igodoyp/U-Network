@@ -15,7 +15,6 @@ import {
   File,
   CheckCircle,
   CheckCircle2,
-  AlertCircle,
   X,
   BookOpen,
   User,
@@ -28,6 +27,7 @@ import {
   Heart,
 } from "lucide-react"
 import { Header } from "@/components/header"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useDropzone } from "react-dropzone"
 import { supabase } from "@/lib/supabaseClient" // Importa el cliente de Supabase
@@ -48,6 +48,7 @@ import {
 import { Check, ChevronDown, Plus } from "lucide-react"
 import { cn } from "@/lib/utils" // Asegúrate de que esta utilidad esté disponible
 import { Switch } from "@/components/ui/switch"
+import { Checkbox } from "@/components/ui/checkbox"
 
 const categorias = ["Certamen", "Control", "Guía", "Apunte", "Resumen", "Laboratorio", "Formulario", "Otro"]
 
@@ -139,6 +140,7 @@ export default function UploadPage() {
   const [openProfesor, setOpenProfesor] = useState(false)
   const [isCreatingProfesor, setIsCreatingProfesor] = useState(false)
   const [openRamo, setOpenRamo] = useState(false); // Añadir este estado al inicio del componente junto con los demás estados
+  const [rightsAccepted, setRightsAccepted] = useState(false)
   const { userData } = useUserContext()
   
   // Mover este hook aquí, antes de cualquier renderizado condicional
@@ -381,6 +383,7 @@ export default function UploadPage() {
     }
 
     setUploadedFile(null)
+    setRightsAccepted(false)
     setAiGenerated({
       titulo: false,
       categoria: false,
@@ -412,6 +415,11 @@ export default function UploadPage() {
   // 2. Modificamos la función handleSubmit para guardar el ID del material creado
   const handleSubmit = async (e) => {
     e?.preventDefault?.()
+
+    if (!rightsAccepted) {
+      alert("Debes confirmar que tienes los derechos y aceptar los Términos y Condiciones.")
+      return
+    }
 
     if (!userData || !userData.id) {
       alert("No se pudo obtener el ID del usuario. Por favor, inicia sesión nuevamente.")
@@ -489,6 +497,7 @@ export default function UploadPage() {
   const handleGoToFeed = () => {
     // Resetear formulario
     setUploadedFile(null)
+    setRightsAccepted(false)
     setFormData({
       titulo: "",
       categoria: "",
@@ -520,6 +529,7 @@ export default function UploadPage() {
   const handleUploadMore = () => {
     // Resetear formulario sin navegar
     setUploadedFile(null)
+    setRightsAccepted(false)
     setFormData({
       titulo: "",
       categoria: "",
@@ -975,20 +985,31 @@ export default function UploadPage() {
                 </div>
               </div>
 
-              <div className="px-1 py-1 text-sm text-amber-900">
-                <p className="flex items-start gap-2">
-                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
-                  <span>
-                    <span className="font-semibold">Importante:</span> eres responsable de los derechos y permisos del material que compartes.
-                    Al subir archivos, declaras que tienes autorización para publicarlos.
-                  </span>
-                </p>
+              <div className="px-1 py-1 text-sm text-gray-700">
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    id="rights-confirmation"
+                    className="mt-0.5"
+                    checked={rightsAccepted}
+                    onCheckedChange={(checked) => setRightsAccepted(checked === true)}
+                  />
+                  <label htmlFor="rights-confirmation" className="leading-relaxed">
+                    Confirmo que tengo los derechos para compartir este material y acepto los{" "}
+                    <Link
+                      href="/terms"
+                      className="font-medium text-blue-600 hover:text-blue-700 underline underline-offset-2"
+                    >
+                      Términos y Condiciones
+                    </Link>
+                    .
+                  </label>
+                </div>
               </div>
             </div>
 
             <div className="flex justify-end mt-6">
               <Button
-                disabled={!uploadedFile || uploadedFile.error || isAnalyzing || !formData.titulo}
+                disabled={!uploadedFile || uploadedFile.error || isAnalyzing || !formData.titulo || !rightsAccepted}
                 onClick={() => setCurrentStep(2)}
                 className="w-full sm:w-auto bg-blue-600"
               >
@@ -1304,7 +1325,7 @@ export default function UploadPage() {
                 Atrás
               </Button>
               <Button
-                disabled={!formData.titulo || !formData.categoria || !formData.carrera}
+                disabled={!formData.titulo || !formData.categoria || !formData.carrera || !rightsAccepted}
                 onClick={(e) => handleSubmit(e)}
                 className="w-2/3 ml-2 bg-blue-600"
               >

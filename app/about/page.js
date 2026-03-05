@@ -6,7 +6,7 @@ export default function AboutPage() {
     <div className="min-h-screen bg-white">
       <div className="max-w-3xl mx-auto px-4 py-10 space-y-6">
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold text-gray-900">Hecho por un estudiante, para estudiantes</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Hecho por estudiantes, para estudiantes</h1>
         </div>
 
         <div className="space-y-4 text-sm text-gray-700 leading-relaxed">
