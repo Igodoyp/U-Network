@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { GlassButton } from "@/components/ui/glass-button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
@@ -98,6 +98,7 @@ export default function SearchPage() {
   const { userData } = useUserContext(); // Obtener los datos del usuario
   const searchParams = useSearchParams()
   const router = useRouter()
+  const hasInitializedCareerFilter = useRef(false)
   
   // Estados para la búsqueda y paginación
   const initialQuery = searchParams?.get("q") || ""
@@ -108,6 +109,7 @@ export default function SearchPage() {
   const [selectedRamoIds, setSelectedRamoIds] = useState([]); // Array de IDs de ramos seleccionados
   const [selectedRamoNombre, setSelectedRamoNombre] = useState(""); // Nombre para mostrar
   const [selectedTipos, setSelectedTipos] = useState([])
+  const [onlyWithSolution, setOnlyWithSolution] = useState(false)
   const [orderBy, setOrderBy] = useState("mejor-valorados")
 
   const ordenarPorRpc = useMemo(() => {
@@ -136,7 +138,7 @@ export default function SearchPage() {
   const searchIds = useMemo(() => rpcResultados.map((r) => r.id).filter(Boolean), [rpcResultados])
   const searchIdsKey = useMemo(() => searchIds.join(","), [searchIds])
 
-  const [dateRange, setDateRange] = useState([2020, 2025])
+  const [dateRange, setDateRange] = useState([2020, 2026])
   const [openRamo, setOpenRamo] = useState(false)
   const [openCarrera, setOpenCarrera] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
@@ -182,12 +184,6 @@ export default function SearchPage() {
 
   const isSearching = isLoading || isSearchingRpc
 
-  // Nuevos estados al inicio del componente SearchPage
-  const [selectedProfesores, setSelectedProfesores] = useState([]);
-  const [openProfesor, setOpenProfesor] = useState(false);
-  const [profesores, setProfesores] = useState([]);
-  const [profesoresDisponibles, setProfesoresDisponibles] = useState([]);
-
   // Estado para el modal de selección de carrera
   const [showCarreraModal, setShowCarreraModal] = useState(false);
   const [carreraSearch, setCarreraSearch] = useState("");
@@ -195,10 +191,6 @@ export default function SearchPage() {
   // Estado para el modal de selección de ramo
   const [showRamoModal, setShowRamoModal] = useState(false);
   const [ramoSearch, setRamoSearch] = useState("");
-
-  // Estado para el modal de selección de profesor
-  const [showProfesorModal, setShowProfesorModal] = useState(false);
-  const [profesorSearch, setProfesorSearch] = useState("");
 
   // Cargar los datos iniciales de carreras y ramos
   useEffect(() => {
@@ -228,19 +220,6 @@ export default function SearchPage() {
         console.error("Error al cargar ramos:", ramosError);
       }
 
-      // Cargar todos los profesores disponibles
-      const { data: profesoresData, error: profesoresError } = await supabase
-        .from("profesores")
-        .select("id, nombre")
-        .order("nombre");
-      
-      if (!profesoresError && profesoresData) {
-        setProfesores(profesoresData);
-        // Inicialmente mostramos todos los profesores
-        setProfesoresDisponibles(profesoresData);
-      } else {
-        console.error("Error al cargar profesores:", profesoresError);
-      }
     };
     
     loadFilterOptions();
@@ -257,6 +236,23 @@ export default function SearchPage() {
       setRamosDisponibles(ramos);
     }
   }, [selectedCarreras, ramos]); // Quitar selectedRamoIds de las dependencias
+
+  // Preseleccionar la carrera del usuario una sola vez al entrar a la vista
+  useEffect(() => {
+    if (hasInitializedCareerFilter.current) return
+
+    if (userData === null) {
+      hasInitializedCareerFilter.current = true
+      return
+    }
+
+    const userCareer = userData?.carrera
+    if (userCareer) {
+      setSelectedCarreras([userCareer])
+    }
+
+    hasInitializedCareerFilter.current = true
+  }, [userData])
 
   // Si se limpian las carreras, también limpiamos el ramo
   useEffect(() => {
@@ -329,11 +325,10 @@ export default function SearchPage() {
         if (selectedTipos.length > 0) {
           query = query.in("categoria", selectedTipos);
         }
-        
-        // Aplicar filtro de profesores
-        if (selectedProfesores.length > 0) {
-          const profesorIds = selectedProfesores.map(p => p.id);
-          query = query.in("profesor_id", profesorIds);
+
+        // Aplicar filtro de materiales con solución
+        if (onlyWithSolution) {
+          query = query.eq("solucion", true);
         }
         
         // Aplicar ordenamiento
@@ -400,7 +395,7 @@ export default function SearchPage() {
     };
     
     fetchMaterials();
-  }, [searchQuery, isSearchingRpc, searchIdsKey, selectedCarreras, selectedRamoIds, selectedTipos, selectedProfesores, orderBy]);
+  }, [searchQuery, isSearchingRpc, searchIdsKey, selectedCarreras, selectedRamoIds, selectedTipos, onlyWithSolution, orderBy]);
 
   // Aplicar filtros locales (aquellos que no pudimos aplicar en la consulta directamente)
   const applyLocalFilters = (data) => {
@@ -436,7 +431,7 @@ export default function SearchPage() {
     selectedCarreras,
     selectedRamoIds,
     selectedTipos,
-    selectedProfesores,
+    onlyWithSolution,
     orderBy,
     dateRange,
   ])
@@ -468,23 +463,12 @@ export default function SearchPage() {
     }
   };
 
-  const handleProfesorSelect = (profesor) => {
-    if (!selectedProfesores.some(p => p.id === profesor.id)) {
-      setSelectedProfesores([...selectedProfesores, profesor]);
-    }
-    setOpenProfesor(false);
-  };
-
-  const removeProfesor = (profesorId) => {
-    setSelectedProfesores(selectedProfesores.filter(p => p.id !== profesorId));
-  };
-
   const clearAllFilters = () => {
     setSelectedCarreras([]);
     setSelectedRamoIds([]);
     setSelectedRamoNombre("");
-    setSelectedProfesores([]);
     setSelectedTipos([]);
+    setOnlyWithSolution(false);
     setDateRange([2020, 2025]);
     setOrderBy("mejor-valorados");
     setCurrentPage(1);
@@ -502,11 +486,11 @@ export default function SearchPage() {
       case "tipo":
         if (value) setSelectedTipos(selectedTipos.filter((t) => t !== value));
         break;
+      case "solucion":
+        setOnlyWithSolution(false);
+        break;
       case "date":
         setDateRange([2020, 2025]);
-        break;
-      case "profesor":
-        if (value) setSelectedProfesores(selectedProfesores.filter(p => p.id !== value));
         break;
     }
   };
@@ -539,10 +523,10 @@ export default function SearchPage() {
     selectedCarreras.length > 0 ||
     selectedRamoIds.length > 0 ||
     selectedTipos.length > 0 ||
+    onlyWithSolution ||
     dateRange[0] !== 2020 ||
     dateRange[1] !== 2025 ||
-    orderBy !== "mejor-valorados" ||
-    selectedProfesores.length > 0;
+    orderBy !== "mejor-valorados";
 
   // Botón de filtro con animación suave
   const FilterButton = () => (
@@ -626,6 +610,21 @@ export default function SearchPage() {
                     <SelectItem value="mas-descargas">Más descargas</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              {/* Con solución */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Contenido</Label>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="desktop-only-solution"
+                    checked={onlyWithSolution}
+                    onCheckedChange={(checked) => setOnlyWithSolution(Boolean(checked))}
+                  />
+                  <Label htmlFor="desktop-only-solution" className="text-sm">
+                    Solo con solución
+                  </Label>
+                </div>
               </div>
 
               {/* Carrera */}
@@ -713,49 +712,6 @@ export default function SearchPage() {
                     </Command>
                   </PopoverContent>
                 </Popover>
-              </div>
-
-              {/* Profesor - Movido aquí entre Ramo y Tipo de material */}
-              <div className="space-y-3">
-                <Label className="text-sm font-medium">Profesor</Label>
-                <Popover open={openProfesor} onOpenChange={setOpenProfesor}>
-                  <PopoverTrigger asChild>
-                    <GlassButton
-                      variant="outline"
-                      role="combobox"
-                      aria-expanded={openProfesor}
-                      className="w-full justify-between bg-transparent"
-                    >
-                      {selectedProfesores.length > 0 ? `${selectedProfesores.length} profesor(es)` : "Seleccionar profesores..."}
-                      <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </GlassButton>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-full p-0">
-                    <Command>
-                      <CommandInput placeholder="Buscar profesor..." />
-                      <CommandList>
-                        <CommandEmpty>No se encontró el profesor.</CommandEmpty>
-                        <CommandGroup>
-                          {profesoresDisponibles.map((profesor) => (
-                            <CommandItem key={profesor.id} onSelect={() => handleProfesorSelect(profesor)}>
-                              {profesor.nombre}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-                {selectedProfesores.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {selectedProfesores.map((profesor) => (
-                      <Badge key={profesor.id} variant="secondary" className="flex items-center gap-1">
-                        {profesor.nombre}
-                        <X className="w-3 h-3 cursor-pointer" onClick={() => removeProfesor(profesor.id)} />
-                      </Badge>
-                    ))}
-                  </div>
-                )}
               </div>
 
               {/* Tipo de material */}
@@ -886,6 +842,17 @@ export default function SearchPage() {
                     </Badge>
                   ))}
 
+                  {/* Solo con solución */}
+                  {onlyWithSolution && (
+                    <Badge variant="secondary" className="flex items-center gap-1">
+                      Con solución
+                      <X
+                        className="w-3 h-3 cursor-pointer hover:text-red-600"
+                        onClick={() => removeFilter("solucion")}
+                      />
+                    </Badge>
+                  )}
+
                   {/* Rango de fechas */}
                   {(dateRange[0] !== 2020 || dateRange[1] !== 2025) && (
                     <Badge variant="secondary" className="flex items-center gap-1">
@@ -904,17 +871,6 @@ export default function SearchPage() {
                       />
                     </Badge>
                   )}
-
-                  {/* Profesores seleccionados */}
-                  {selectedProfesores.map((profesor) => (
-                    <Badge key={profesor.id} variant="secondary" className="flex items-center gap-1">
-                      {profesor.nombre}
-                      <X
-                        className="w-3 h-3 cursor-pointer hover:text-red-600"
-                        onClick={() => removeFilter("profesor", profesor.id)}
-                      />
-                    </Badge>
-                  ))}
 
                   {/* Limpiar todos los filtros */}
                   <GlassButton
@@ -1006,6 +962,21 @@ export default function SearchPage() {
                   <SelectItem value="mas-descargas">Más descargas</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Con solución */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">Contenido</Label>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="mobile-only-solution"
+                  checked={onlyWithSolution}
+                  onCheckedChange={(checked) => setOnlyWithSolution(Boolean(checked))}
+                />
+                <Label htmlFor="mobile-only-solution" className="text-sm">
+                  Solo con solución
+                </Label>
+              </div>
             </div>
 
             {/* Carrera - CORREGIDO */}
@@ -1145,75 +1116,6 @@ export default function SearchPage() {
               </Dialog>
             </div>
 
-            {/* Profesor - CORREGIDO */}
-            <div className="space-y-3">
-              <Label className="text-sm font-medium">Profesor</Label>
-              <GlassButton
-                variant="outline"
-                className="w-full justify-between bg-transparent"
-                onClick={() => setShowProfesorModal(true)}
-              >
-                {selectedProfesores.length > 0 ? `${selectedProfesores.length} profesor(es)` : "Seleccionar profesores..."}
-                <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </GlassButton>
-              
-              {selectedProfesores.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {selectedProfesores.map((profesor) => (
-                    <Badge key={profesor.id} variant="secondary" className="flex items-center gap-1">
-                      {profesor.nombre}
-                      <X className="w-3 h-3 cursor-pointer" onClick={() => removeProfesor(profesor.id)} />
-                    </Badge>
-                  ))}
-                </div>
-              )}
-              
-              <Dialog open={showProfesorModal} onOpenChange={setShowProfesorModal}>
-                <DialogContent className="sm:max-w-[425px]">
-                  <DialogHeader>
-                    <DialogTitle>Seleccionar Profesores</DialogTitle>
-                    <DialogDescription>
-                      Elige uno o más profesores de la lista.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="max-h-[300px] overflow-auto">
-                    <Input
-                      placeholder="Buscar profesor..."
-                      className="mb-2"
-                      value={profesorSearch}
-                      onChange={(e) => setProfesorSearch(e.target.value)}
-                    />
-                    <div className="space-y-2">
-                      {profesoresDisponibles
-                        .filter(prof => prof.nombre.toLowerCase().includes(profesorSearch.toLowerCase()))
-                        .map((profesor) => (
-                          <div key={profesor.id} className="flex items-center gap-2">
-                            <Checkbox
-                              id={`profesor-${profesor.id}`}
-                              checked={selectedProfesores.some(p => p.id === profesor.id)}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  if (!selectedProfesores.some(p => p.id === profesor.id)) {
-                                    setSelectedProfesores([...selectedProfesores, profesor]);
-                                  }
-                                } else {
-                                  removeProfesor(profesor.id);
-                                }
-                              }}
-                            />
-                            <Label htmlFor={`profesor-${profesor.id}`}>{profesor.nombre}</Label>
-                          </div>
-                        ))
-                      }
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <GlassButton onClick={() => setShowProfesorModal(false)}>Aplicar</GlassButton>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </div>
-            
             {/* Tipo de material */}
             <div className="space-y-3">
               <Label className="text-sm font-medium">Tipo de material</Label>

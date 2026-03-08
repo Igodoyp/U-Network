@@ -153,23 +153,29 @@ export async function POST(request) {
 
     // 5. Analizar con Gemini usando input multimodal
     const prompt = `
-Eres un experto clasificando material universitario de la facultad de Ingeniería UDD.
-Analiza este documento y extrae la siguiente información en formato JSON estricto:
+Eres un experto moderador y clasificador de material académico para la facultad de Ingeniería de la UDD. 
+Tu tarea es analizar este documento/imagen. Primero, debes determinar si es material académico válido y seguro. Luego, extrae su información.
 
-- titulo: Un nombre claro (Ej: "Certamen 1 Cálculo III 2023").
-- categoria: Elige UNO: "Certamen", "Control", "Guía", "Apunte", "Resumen", "Laboratorio", "Formulario", "Otro".
-- ramo: El nombre de la asignatura (Ej: "Cálculo Integral", "Física II").
-- semestre: Formato "AÑO-SEMESTRE" donde SEMESTRE es 1 o 2 (Ej: "2023-1", "2023-2", "2024-1"). 
-  * Si el documento dice "Bimestre IV" o "2do semestre", usa semestre 2.
-  * Si dice "1er semestre", "Bimestre I-II" o similar, usa semestre 1.
-  * Si no encuentras el semestre, pon solo el año.
-  * Si no encuentras año ni semestre, pon null.
-- descripcion: Resumen muy breve (máx 15 palabras).
-- profesor: Nombre y apellido del profesor si aparece (o null).
-- solucion: true si el archivo contiene respuestas/pauta, false si no.
-- dificultad: Elige UNO: "Fácil", "Media", "Difícil" según el nivel de dificultad del material.
+REGLAS DE MODERACIÓN:
+- Marca como INVÁLIDO (es_valido: false) cualquier contenido que sea: NSFW, ilegal, memes, fotos personales, capturas de pantalla de redes sociales, spam, o contenido que no tenga absolutamente ninguna relación con el estudio universitario.
+- Marca como VÁLIDO (es_valido: true) cualquier apunte, certamen, guía, libro o material de estudio legítimo.
 
-IMPORTANTE: Devuelve SOLO JSON válido, sin markdown.
+EXTRAE LA SIGUIENTE INFORMACIÓN EN FORMATO JSON ESTRICTO:
+
+{
+  "es_valido": booleano (true si es material académico, false si es inapropiado/spam),
+  "motivo_rechazo": "string" (Si es_valido es false, explica brevemente por qué. Si es true, pon null),
+  "titulo": "string" (Un nombre claro, Ej: "Certamen 1 Cálculo III 2023". Si es inválido, pon null),
+  "categoria": "string" (Elige UNO: "Certamen", "Control", "Guía", "Apunte", "Resumen", "Laboratorio", "Formulario", "Otro". Si es inválido, pon null),
+  "ramo": "string" (El nombre exacto de la asignatura inferido del texto. Si es inválido, pon null),
+  "semestre": "string" (Formato "AÑO-SEMESTRE" donde SEMESTRE es 1 o 2. Ej: "2023-1". Usa 2 para "Bimestre IV/2do semestre". Usa 1 para "1er semestre/Bimestre I-II". Si solo hay año, pon el año. Si no hay nada, pon null),
+  "descripcion": "string" (Resumen muy breve de los temas tratados, máx 15 palabras. Si es inválido, pon null),
+  "profesor": "string" (Nombre y apellido del profesor si aparece explícitamente, si no, null),
+  "solucion": booleano (true si el archivo contiene respuestas o pauta explícita, false si son solo preguntas o apuntes),
+  "dificultad": "string" (Elige UNO: "Fácil", "Media", "Difícil" basándote en la complejidad matemática/teórica del texto. Si es un apunte básico es Fácil, si es un certamen avanzado es Difícil)
+}
+
+IMPORTANTE: Devuelve ÚNICA Y EXCLUSIVAMENTE un objeto JSON válido. No uses bloques de código Markdown. No agregues texto antes ni después.
     `
 
     let result
@@ -296,7 +302,31 @@ IMPORTANTE: Devuelve SOLO JSON válido, sin markdown.
       )
     }
 
-    // 8. Retornar metadata con info adicional
+    // 8. Bloquear material rechazado por moderación IA
+    const esValido = metadata?.es_valido
+    const materialRechazado = esValido === false || esValido === "false"
+
+    if (materialRechazado) {
+      const motivoRechazo =
+        typeof metadata?.motivo_rechazo === "string" && metadata.motivo_rechazo.trim().length > 0
+          ? metadata.motivo_rechazo.trim()
+          : "El contenido no cumple las normas de material académico permitido."
+
+      console.warn("⛔ Material rechazado por IA:", motivoRechazo)
+      await supabase.storage.from("materiales").remove([filePath])
+
+      return NextResponse.json(
+        {
+          success: false,
+          isValid: false,
+          motivo_rechazo: motivoRechazo,
+          error: "Material rechazado por moderación",
+        },
+        { status: 422 }
+      )
+    }
+
+    // 9. Retornar metadata con info adicional
     console.log("6️⃣ Preparando respuesta final...")
     const finalResponse = {
       success: true,

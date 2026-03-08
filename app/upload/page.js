@@ -15,6 +15,7 @@ import {
   File,
   CheckCircle,
   CheckCircle2,
+  AlertCircle,
   X,
   BookOpen,
   User,
@@ -63,7 +64,7 @@ const carreras = [
   "Geología",
 ]
 
-const semestres = ["2025-1", "2024-2", "2024-1", "2023-2", "2023-1", "2022-2", "2022-1", "2021-2", "2021-1"]
+const semestres = ["2026-1", "2025-1", "2024-2", "2024-1", "2023-2", "2023-1", "2022-2", "2022-1", "2021-2", "2021-1"]
 
 // SuccessMessage SIN bloques de agradecimiento ni estadísticas motivacionales
 function SuccessMessage({ onViewFeed, onUploadMore }) {
@@ -167,6 +168,16 @@ export default function UploadPage() {
   useEffect(() => {
     console.log("👁️ FormData cambió:", formData)
   }, [formData])
+
+  // Preseleccionar la carrera del usuario si el formulario aún no tiene una
+  useEffect(() => {
+    if (!userData?.carrera) return
+
+    setFormData((prev) => {
+      if (prev.carrera) return prev
+      return { ...prev, carrera: userData.carrera }
+    })
+  }, [userData?.carrera])
 
   // Limpiar archivo del Storage si se abandona la página sin guardar
   useEffect(() => {
@@ -278,8 +289,36 @@ export default function UploadPage() {
           return
         }
 
+        // MANEJO DE ARCHIVOS RECHAZADOS POR MODERACIÓN (HTTP 422)
+        if (response.status === 422 && data.isValid === false) {
+          const motivoRechazo = data.motivo_rechazo || "El contenido no cumple las normas de la plataforma."
+          console.warn("⛔ MATERIAL RECHAZADO:", motivoRechazo)
+          setUploadedFile({
+            file,
+            error: `⛔ Archivo rechazado: ${motivoRechazo}`,
+          })
+          // El backend elimina el archivo de Storage en este caso
+          setStoragePath(null)
+          setIsAnalyzing(false)
+          return
+        }
+
         if (response.ok && data.success) {
           const { metadata } = data
+
+          // Fallback defensivo por si el backend devolviera éxito con moderación negativa
+          if (metadata?.es_valido === false || metadata?.es_valido === "false") {
+            const motivoRechazo = metadata?.motivo_rechazo || "El contenido no cumple las normas de la plataforma."
+            console.warn("⛔ MATERIAL RECHAZADO (fallback):", motivoRechazo)
+            setUploadedFile({
+              file,
+              error: `⛔ Archivo rechazado: ${motivoRechazo}`,
+            })
+            setStoragePath(null)
+            setIsAnalyzing(false)
+            return
+          }
+
           console.log("✅ IA análisis completado! Metadatos extraídos:", metadata)
           console.log("📦 Tipo de metadata:", typeof metadata)
           console.log("📋 Keys en metadata:", Object.keys(metadata))
@@ -506,7 +545,7 @@ export default function UploadPage() {
       ramo_id: null,
       profesor_id: null,
       profesorNombre: "",
-      carrera: "",
+      carrera: userData?.carrera || "",
       descripcion: "",
       solucion: false,
       dificultad: "",
@@ -538,7 +577,7 @@ export default function UploadPage() {
       ramo_id: null,
       profesor_id: null,
       profesorNombre: "",
-      carrera: "",
+      carrera: userData?.carrera || "",
       descripcion: "",
       solucion: false,
       dificultad: "",
@@ -793,6 +832,7 @@ export default function UploadPage() {
   }
 
   const isFormValid = uploadedFile && !uploadedFile.error && formData.titulo && formData.categoria && formData.carrera
+  const pendingFieldClass = "bg-yellow-50 border-yellow-200 focus-visible:ring-yellow-300"
 
   if (showSuccess) {
     return (
@@ -1048,6 +1088,7 @@ export default function UploadPage() {
                           placeholder="Ej: Certamen 1 de Cálculo - 2024"
                           value={formData.titulo}
                           onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
+                          className={cn(!formData.titulo && pendingFieldClass)}
                         />
                       </div>
 
@@ -1065,7 +1106,7 @@ export default function UploadPage() {
                           value={formData.categoria}
                           onValueChange={(value) => setFormData({ ...formData, categoria: value })}
                         >
-                          <SelectTrigger id="categoria">
+                          <SelectTrigger id="categoria" className={cn(!formData.categoria && pendingFieldClass)}>
                             <SelectValue placeholder="Selecciona la categoría" />
                           </SelectTrigger>
                           <SelectContent>
@@ -1084,7 +1125,7 @@ export default function UploadPage() {
                           value={formData.carrera}
                           onValueChange={(value) => setFormData({ ...formData, carrera: value })}
                         >
-                          <SelectTrigger id="carrera">
+                          <SelectTrigger id="carrera" className={cn(!formData.carrera && pendingFieldClass)}>
                             <SelectValue placeholder="Selecciona la carrera" />
                           </SelectTrigger>
                           <SelectContent>
@@ -1121,7 +1162,7 @@ export default function UploadPage() {
                           value={formData.semestre}
                           onValueChange={(value) => setFormData({ ...formData, semestre: value })}
                         >
-                          <SelectTrigger id="semestre">
+                          <SelectTrigger id="semestre" className={cn(!formData.semestre && pendingFieldClass)}>
                             <SelectValue placeholder="Selecciona el semestre" />
                           </SelectTrigger>
                           <SelectContent>
@@ -1149,7 +1190,7 @@ export default function UploadPage() {
                             <Button
                               variant="outline"
                               role="combobox"
-                              className="w-full justify-between"
+                              className={cn("w-full justify-between", !formData.ramo_id && pendingFieldClass)}
                               disabled={!formData.carrera}
                             >
                               {formData.ramo || "Seleccionar ramo"}
@@ -1196,7 +1237,11 @@ export default function UploadPage() {
                         </div>
                         <Popover open={openProfesor} onOpenChange={setOpenProfesor}>
                           <PopoverTrigger asChild>
-                            <Button variant="outline" role="combobox" className="w-full justify-between">
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              className={cn("w-full justify-between", !formData.profesor_id && pendingFieldClass)}
+                            >
                               {formData.profesorNombre || "Seleccionar o crear profesor"}
                               <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
@@ -1263,6 +1308,7 @@ export default function UploadPage() {
                           value={formData.descripcion}
                           onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
                           rows={3}
+                          className={cn(!formData.descripcion && pendingFieldClass)}
                         />
                       </div>
 
@@ -1281,7 +1327,7 @@ export default function UploadPage() {
                             value={formData.dificultad}
                             onValueChange={(value) => setFormData({ ...formData, dificultad: value })}
                           >
-                            <SelectTrigger id="dificultad">
+                            <SelectTrigger id="dificultad" className={cn(!formData.dificultad && pendingFieldClass)}>
                               <SelectValue placeholder="Selecciona dificultad" />
                             </SelectTrigger>
                             <SelectContent>

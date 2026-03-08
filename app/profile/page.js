@@ -403,7 +403,7 @@ const ProfilePage = () => {
         {/* Header del perfil */}
         <Card className="mb-6 sm:mb-8">
           <CardContent className="p-4 sm:p-6 lg:p-8">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
+            <div className="flex flex-col sm:flex-row items-center sm:items-center gap-4 sm:gap-6">
               {/* Avatar y botón de cambiar foto */}
               <div className="relative mx-auto sm:mx-0">
                 <Avatar className="w-24 h-24 sm:w-32 sm:h-32">
@@ -433,7 +433,7 @@ const ProfilePage = () => {
               </div>
 
               {/* Información personal */}
-              <div className="flex-1 space-y-3 sm:space-y-4 text-center sm:text-left">
+              <div className="w-full sm:flex-1 space-y-3 sm:space-y-4 text-center sm:text-left">
                 <div>
                   <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
                     {userData?.nombre || "Usuario"}
@@ -462,7 +462,7 @@ const ProfilePage = () => {
                 <Button
                   onClick={() => router.push("/settings")}
                   variant="outline"
-                  className="flex items-center gap-2 bg-transparent w-full sm:w-auto"
+                  className="flex items-center gap-2 bg-transparent w-full sm:w-auto mx-auto sm:mx-0"
                 >
                   <Settings className="w-4 h-4" />
                   Editar perfil
