@@ -50,8 +50,7 @@ import { Check, ChevronDown, Plus } from "lucide-react"
 import { cn } from "@/lib/utils" // Asegúrate de que esta utilidad esté disponible
 import { Switch } from "@/components/ui/switch"
 import { Checkbox } from "@/components/ui/checkbox"
-
-const categorias = ["Certamen", "Control", "Guía", "Apunte", "Resumen", "Laboratorio", "Formulario", "Otro"]
+import { CATEGORIAS_MATERIAL } from "@/lib/constants"
 
 const carreras = [
   "Ingeniería Plan Común",
@@ -595,7 +594,7 @@ export default function UploadPage() {
     const normalized = normalizeText(value)
     if (!normalized) return ""
 
-    const match = categorias.find(
+    const match = CATEGORIAS_MATERIAL.find(
       (categoria) => normalizeText(categoria) === normalized
     )
 
@@ -1110,7 +1109,7 @@ export default function UploadPage() {
                             <SelectValue placeholder="Selecciona la categoría" />
                           </SelectTrigger>
                           <SelectContent>
-                            {categorias.map((categoria) => (
+                            {CATEGORIAS_MATERIAL.map((categoria) => (
                               <SelectItem key={categoria} value={categoria}>
                                 {categoria}
                               </SelectItem>

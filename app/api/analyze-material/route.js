@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { GoogleGenAI } from "@google/genai"
 import crypto from "crypto"
+import { CATEGORIAS_MATERIAL } from "@/lib/constants"
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -9,6 +10,7 @@ const supabase = createClient(
 )
 
 const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
+const categoriasMaterialPrompt = CATEGORIAS_MATERIAL.map((categoria) => `"${categoria}"`).join(", ")
 
 export async function POST(request) {
   try {
@@ -166,7 +168,7 @@ EXTRAE LA SIGUIENTE INFORMACIÓN EN FORMATO JSON ESTRICTO:
   "es_valido": booleano (true si es material académico, false si es inapropiado/spam),
   "motivo_rechazo": "string" (Si es_valido es false, explica brevemente por qué. Si es true, pon null),
   "titulo": "string" (Un nombre claro, Ej: "Certamen 1 Cálculo III 2023". Si es inválido, pon null),
-  "categoria": "string" (Elige UNO: "Certamen", "Control", "Guía", "Apunte", "Resumen", "Laboratorio", "Formulario", "Otro". Si es inválido, pon null),
+  "categoria": "string" (Elige UNO: ${categoriasMaterialPrompt}. Si es inválido, pon null),
   "ramo": "string" (El nombre exacto de la asignatura inferido del texto. Si es inválido, pon null),
   "semestre": "string" (Formato "AÑO-SEMESTRE" donde SEMESTRE es 1 o 2. Ej: "2023-1". Usa 2 para "Bimestre IV/2do semestre". Usa 1 para "1er semestre/Bimestre I-II". Si solo hay año, pon el año. Si no hay nada, pon null),
   "descripcion": "string" (Resumen muy breve de los temas tratados, máx 15 palabras. Si es inválido, pon null),

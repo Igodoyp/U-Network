@@ -3,99 +3,25 @@
 import { useState, useEffect, useMemo, useRef } from "react"
 import { GlassButton } from "@/components/ui/glass-button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Slider } from "@/components/ui/slider"
 import { Badge } from "@/components/ui/badge"
 import { Search, Filter, ThumbsUp, FileText, BookOpen, User, Calendar, Tag, X, ChevronDown } from "lucide-react"
-import { Header } from "@/components/header"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { supabase } from "@/lib/supabaseClient"
-import { useUserContext } from "@/context/UserContext" // Añadir esta importación
+import { useUserContext } from "@/context/UserContext"
 import { useBuscador } from "@/hooks/useBuscador"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+import { CATEGORIAS_MATERIAL, CARRERAS } from "@/lib/constants"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import MaterialCard from "@/components/materialCard"
 
-// Tipos de material constantes (coinciden con las opciones de subida)
-const tiposMaterial = ["Certamen", "Control", "Guía", "Apunte", "Resumen", "Laboratorio", "Formulario", "Otro"]
-
-function MaterialCard({ material }) {
-  const router = useRouter()
-
-  return (
-    <Card
-      className="glossy-material-card w-full cursor-pointer border-0"
-      style={{
-        background: "rgba(255, 255, 255, 0.28)",
-        backdropFilter: "blur(16px) saturate(185%)",
-        WebkitBackdropFilter: "blur(16px) saturate(185%)",
-      }}
-      onClick={() => router.push(`/document/${material.id}`)}
-    >
-      <CardContent className="glossy-material-card-content p-3 sm:p-4">
-        <div className="flex gap-3 sm:gap-4">
-          <div className="flex-shrink-0">
-            <div className="w-12 h-16 sm:w-16 sm:h-20 bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg flex items-center justify-center border">
-              <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
-            </div>
-          </div>
-          <div className="flex-1 min-w-0 space-y-1 sm:space-y-2">
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-gray-900 text-sm sm:text-base truncate">{material.title}</h3>
-                {material.hasSolution && (
-                  <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full whitespace-nowrap">
-                    Con solución
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-1">
-                <Tag className="w-3 h-3 text-purple-500" />
-                <span className="text-xs font-medium text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full">
-                  {material.type}
-                </span>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1 bg-green-50 px-2 py-1 rounded-full">
-                <ThumbsUp className="w-3 h-3 text-green-600" />
-                <span className="text-xs font-medium text-green-700">{material.rating}%</span>
-              </div>
-            </div>
-            <div className="flex items-center gap-1 text-xs text-gray-600">
-              <BookOpen className="w-3 h-3" />
-              <span className="truncate">
-                {material.subject} - {material.career}
-              </span>
-            </div>
-            <div className="flex items-center gap-1 text-xs text-gray-600">
-              <User className="w-3 h-3" />
-              <span className="truncate">{material.professor}</span>
-            </div>
-            <div className="flex items-center gap-1 text-xs text-gray-500">
-              <Calendar className="w-3 h-3" />
-              <span>{material.semester}</span>
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
 
 export default function SearchPage() {
-  const { userData } = useUserContext(); // Obtener los datos del usuario
+  const { userData } = useUserContext();
   const searchParams = useSearchParams()
   const router = useRouter()
   const hasInitializedCareerFilter = useRef(false)
@@ -195,16 +121,7 @@ export default function SearchPage() {
   // Cargar los datos iniciales de carreras y ramos
   useEffect(() => {
     const loadFilterOptions = async () => {
-      setCarreras([
-        "Ingeniería Plan Común",
-        "Ingeniería Civil Industrial",
-        "Ingeniería Civil en BioMedicina",
-        "Ingeniería Civil en Informática e Innovación Tecnológica",
-        "Ingeniería Civil en Informática e Inteligencia Artificial",
-        "Ingeniería Civil en Minería",
-        "Ingeniería Civil en Obras Civiles",
-        "Geología",
-      ]);
+      setCarreras([...CARRERAS]);
       
       // Cargar todos los ramos disponibles
       const { data: ramosData, error: ramosError } = await supabase
@@ -528,17 +445,6 @@ export default function SearchPage() {
     dateRange[1] !== 2025 ||
     orderBy !== "mejor-valorados";
 
-  // Botón de filtro con animación suave
-  const FilterButton = () => (
-    <GlassButton
-      onClick={() => setShowFilters(true)}
-      className="fixed z-40 bottom-20 right-4 h-12 w-12 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 flex items-center justify-center md:hidden"
-      aria-label="Filtros"
-    >
-      <Filter className="h-5 w-5 text-white" />
-    </GlassButton>
-  );
-
   // Panel de filtros mejorado para móvil
   const MobileFilterPanel = () => (
     <div
@@ -718,7 +624,7 @@ export default function SearchPage() {
               <div className="space-y-3">
                 <Label className="text-sm font-medium">Tipo de material</Label>
                 <div className="space-y-2">
-                  {tiposMaterial.map((tipo) => (
+                  {CATEGORIAS_MATERIAL.map((tipo) => (
                     <div key={tipo} className="flex items-center space-x-2">
                       <Checkbox
                         id={tipo}
@@ -1120,7 +1026,7 @@ export default function SearchPage() {
             <div className="space-y-3">
               <Label className="text-sm font-medium">Tipo de material</Label>
               <div className="space-y-2">
-                {tiposMaterial.map((tipo) => (
+                {CATEGORIAS_MATERIAL.map((tipo) => (
                   <div key={tipo} className="flex items-center space-x-2">
                     <Checkbox
                       id={`mobile-${tipo}`}

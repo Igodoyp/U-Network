@@ -17,9 +17,15 @@ export const CARRERAS = [
 ] as const
 
 /**
+ * Tipos de material
+ */
+export const CATEGORIAS_MATERIAL = ["Certamen", "Control", "Guía", "Apunte", "Resumen", "Laboratorio", "Formulario", "Otro"] as const
+
+
+/**
  * Años académicos disponibles
  */
-export const AÑOS = ["1", "2", "3", "4", "5", "6"] as const
+export const AÑOS = ["1", "2", "3", "4", "5", "6", "7"] as const
 
 /**
  * Pasos del flujo de onboarding
@@ -30,23 +36,6 @@ export const ONBOARDING_STEPS = [
   { id: "subjects", name: "Ramos" },
 ] as const
 
-/**
- * Categorías de intereses para personalización
- */
-export const INTEREST_CATEGORIES = [
-  {
-    name: "Áreas de Estudio",
-    interests: ["Matemáticas", "Programación", "Física", "Química", "Economía", "Gestión"]
-  },
-  {
-    name: "Tipo de Material",
-    interests: ["Apuntes", "Resúmenes", "Ejercicios", "Pruebas antiguas", "Proyectos", "Guías"]
-  },
-  {
-    name: "Objetivos",
-    interests: ["Aprobar ramos", "Profundizar conocimientos", "Preparar certámenes", "Ayudar a compañeros", "Investigación", "Prácticas"]
-  }
-] as const
 
 // Tipos derivados de las constantes
 export type Carrera = typeof CARRERAS[number]
