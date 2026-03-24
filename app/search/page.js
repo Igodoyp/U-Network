@@ -18,6 +18,7 @@ import { useBuscador } from "@/hooks/useBuscador"
 import { CATEGORIAS_MATERIAL, CARRERAS } from "@/lib/constants"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import MaterialCard from "@/components/materialCard"
+import SearchBar from "@/components/searchBar"
 
 
 export default function SearchPage() {
@@ -674,39 +675,7 @@ export default function SearchPage() {
         {/* Contenido principal */}
         <div className="flex-1">
           {/* Barra de búsqueda */}
-          <div className="bg-white shadow-sm border-b sticky top-16 sm:top-28 z-30">
-            <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4">
-              <div className="flex items-center gap-4">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <Input
-                    placeholder="Buscar material..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 pr-10 py-2 border-gray-200 focus:border-blue-500 rounded-lg"
-                  />
-                  {searchQuery && (
-                    <button
-                      type="button"
-                      onClick={() => setSearchQuery("")}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                      aria-label="Limpiar búsqueda"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-                <GlassButton
-                  variant="outline"
-                  onClick={() => setShowFilters(true)}
-                  className="flex items-center gap-2 lg:hidden"
-                >
-                  <Filter className="w-4 h-4" />
-                  Filtros
-                </GlassButton>
-              </div>
-            </div>
-          </div>
+          <SearchBar />
 
           {/* Filtros activos */}
           {hasActiveFilters && (

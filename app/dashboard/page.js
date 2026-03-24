@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation"
 import { useUserContext } from "@/context/UserContext"
 import { supabase } from "@/lib/supabaseClient"
 import MaterialCard from "@/components/materialCard"
+import SearchBar from "@/components/searchBar"
 
 
 export default function Dashboard() {
