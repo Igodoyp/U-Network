@@ -145,7 +145,12 @@ export default function UploadPage() {
   
   // Mover este hook aquí, antes de cualquier renderizado condicional
   const [currentStep, setCurrentStep] = useState(1)
-  const totalSteps = 2
+  const totalSteps = 3
+  const stepTitles = {
+  1: "¿Qué vas a compartir hoy?",
+  2: "Subir archivo",
+  3: "Información del material"
+  }
 
   // 1. Primero añadimos un estado para guardar el ID del material subido
   const [uploadedMaterialId, setUploadedMaterialId] = useState(null);
@@ -346,7 +351,7 @@ export default function UploadPage() {
           }
           console.log("📝 Nuevo formData antes de set:", newFormData)
           setFormData((prev) => {
-            const updated = { ...prev, ...newFormData }
+            const updated = { ...prev, ...newFormData, categoria: prev.categoria || newFormData.categoria }
             console.log("✨ FormData actualizado en estado:", updated)
             return updated
           })
@@ -589,6 +594,10 @@ export default function UploadPage() {
     setCurrentStep(1)
   }
 
+  const handleSelecctCategoria = (categoria) => {
+    setFormData((prev) => ({ ...prev, categoria }))
+    setCurrentStep(2)
+  }
   const normalizeText = (value) => (value || "").toString().trim().toLowerCase()
   const normalizeCategoria = (value) => {
     const normalized = normalizeText(value)
@@ -854,8 +863,8 @@ export default function UploadPage() {
       <div className="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
         {/* Header con pasos */}
         <div className="mb-6">
-          <h1 className="text-xl sm:text-2xl font-bold text-center mb-4">
-            {currentStep === 1 ? "Subir archivo" : "Información del material"}
+          <h1 className="text-xl sm:text-2xl font-bold text-center mb-4"> 
+            {stepTitles[currentStep]}
           </h1>
           
           {/* Indicador de pasos */}
@@ -872,8 +881,24 @@ export default function UploadPage() {
           </div>
         </div>
 
-        {/* PASO 1: Subida de archivo */}
+        {/* PASO 3: Selección de categoría */}
         {currentStep === 1 && (
+          <div className="space-y-4">
+            <Card>
+              <CardContent className="p-4 sm:p-6">
+                <p className="text-base sm:text-lg font-semibold text-gray-900 mb-2">
+                  ¿Qué vas a compartir hoy?
+                </p>
+                <p className="text-sm text-gray-600 mb-4">
+                  Elige el tipo de material para comenzar.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* PASO 2: Subida de archivo */}
+        {currentStep === 2 && (
           <div className="space-y-4">
             <Card>
               <CardContent className="p-4">
@@ -1049,7 +1074,7 @@ export default function UploadPage() {
             <div className="flex justify-end mt-6">
               <Button
                 disabled={!uploadedFile || uploadedFile.error || isAnalyzing || !formData.titulo || !rightsAccepted}
-                onClick={() => setCurrentStep(2)}
+                onClick={() => setCurrentStep(3)}
                 className="w-full sm:w-auto bg-blue-600"
               >
                 {isAnalyzing ? "Analizando..." : "Continuar"}
@@ -1058,8 +1083,8 @@ export default function UploadPage() {
           </div>
         )}
 
-        {/* PASO 2: Información del material */}
-        {currentStep === 2 && (
+        {/* PASO 3: Información del material */}
+        {currentStep === 3 && (
           <div className="space-y-4">
             <Card>
               <CardContent className="p-4">
@@ -1366,7 +1391,7 @@ export default function UploadPage() {
             </Card>
 
             <div className="flex justify-between mt-6">
-              <Button variant="outline" onClick={() => setCurrentStep(1)} className="w-1/3">
+              <Button variant="outline" onClick={() => setCurrentStep(2)} className="w-1/3">
                 Atrás
               </Button>
               <Button
