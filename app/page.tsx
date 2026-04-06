@@ -212,7 +212,7 @@ export default function UNetworkAuth() {
           className="absolute inset-0 bg-cover bg-center bg-no-repeat bg-fixed"
           style={{ backgroundImage: "url('https://i.pinimg.com/736x/c6/de/b1/c6deb1f7fe2c888f227a600e1e4e6a47.jpg')" }}
         />
-        <div className="absolute inset-0 bg-white/25 backdrop-blur-[3px]" />
+        <div className="absolute inset-0 bg-black/10 backdrop-blur-[3px]" />
         <div className="relative z-10 text-center space-y-4">
           <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
           <p className="text-gray-800 font-medium">Cargando...</p>
@@ -240,7 +240,7 @@ export default function UNetworkAuth() {
           className="absolute inset-0 bg-cover bg-center bg-no-repeat bg-fixed"
           style={{ backgroundImage: "url('https://i.pinimg.com/736x/c6/de/b1/c6deb1f7fe2c888f227a600e1e4e6a47.jpg')" }}
         />
-        <div className="absolute inset-0 bg-white/25 backdrop-blur-[3px]" />
+        <div className="absolute inset-0 bg-black/10 backdrop-blur-[3px]" />
         <div className="relative z-10 w-full max-w-2xl space-y-8">
           {/* H1 */}
           <div className="text-center">
@@ -341,7 +341,7 @@ export default function UNetworkAuth() {
         className="absolute inset-0 bg-cover bg-center bg-no-repeat bg-fixed"
         style={{ backgroundImage: "url('https://i.pinimg.com/736x/c6/de/b1/c6deb1f7fe2c888f227a600e1e4e6a47.jpg')" }}
       />
-      <div className="absolute inset-0 bg-white/25 backdrop-blur-[3px]" />
+      <div className="absolute inset-0 bg-black/10 backdrop-blur-[3px]" />
       <div className="relative z-10 w-full max-w-lg">
         {/* Indicador de progreso */}
         <ProgressIndicator steps={ONBOARDING_STEPS} currentStep={currentStep} />

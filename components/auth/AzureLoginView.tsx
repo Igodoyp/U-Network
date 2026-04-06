@@ -50,7 +50,7 @@ export function AzureLoginView({ isLoading = false }: AzureLoginViewProps) {
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: "url('https://i.pinimg.com/736x/c6/de/b1/c6deb1f7fe2c888f227a600e1e4e6a47.jpg')" }}
       />
-      <div className="absolute inset-0 bg-white/25 backdrop-blur-[3px]" />
+      <div className="absolute inset-0 bg-black/10 backdrop-blur-[3px]" />
       <Card className="relative z-10 w-full shadow-xl border-0 bg-white/80">
       {/* Encabezado con logo y bienvenida */}
       <CardHeader className="text-center space-y-4 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 rounded-t-lg">
