@@ -65,6 +65,64 @@ const carreras = [
 
 const semestres = ["2026-1", "2025-1", "2024-2", "2024-1", "2023-2", "2023-1", "2022-2", "2022-1", "2021-2", "2021-1"]
 
+const MATERIAL_TYPE_CONFIG = {
+  Certamen: {
+    requiresProfesor: true,
+    requiresSolucion: true,
+    requiresDificultad: true,
+    subtitle: "Evaluacion formal del ramo",
+  },
+  Control: {
+    requiresProfesor: true,
+    requiresSolucion: true,
+    requiresDificultad: true,
+    subtitle: "Evaluacion corta o parcial",
+  },
+  "Guía": {
+    requiresProfesor: true,
+    requiresSolucion: true,
+    requiresDificultad: true,
+    subtitle: "Guia de ejercicios o trabajo",
+  },
+  Apunte: {
+    requiresProfesor: false,
+    requiresSolucion: false,
+    requiresDificultad: false,
+    subtitle: "Material personal de apoyo",
+  },
+  Resumen: {
+    requiresProfesor: false,
+    requiresSolucion: false,
+    requiresDificultad: false,
+    subtitle: "Sintesis personal de contenidos",
+  },
+  Laboratorio: {
+    requiresProfesor: true,
+    requiresSolucion: true,
+    requiresDificultad: true,
+    subtitle: "Informe, pauta o actividad de laboratorio",
+  },
+  Formulario: {
+    requiresProfesor: false,
+    requiresSolucion: false,
+    requiresDificultad: false,
+    subtitle: "Formulario de formulas o referencia rapida",
+  },
+  Otro: {
+    requiresProfesor: false,
+    requiresSolucion: false,
+    requiresDificultad: false,
+    subtitle: "Otro tipo de material academico",
+  },
+}
+
+const DEFAULT_MATERIAL_CONFIG = {
+  requiresProfesor: true,
+  requiresSolucion: true,
+  requiresDificultad: true,
+  subtitle: "Material academico",
+}
+
 // SuccessMessage SIN bloques de agradecimiento ni estadísticas motivacionales
 function SuccessMessage({ onViewFeed, onUploadMore }) {
   return (
@@ -166,6 +224,7 @@ export default function UploadPage() {
     profesor: false,
     descripcion: false,
     solucion: false,
+    dificultad: false,
   })
 
   // Monitorear cambios en formData
@@ -365,6 +424,7 @@ export default function UploadPage() {
             profesor: !!metadata.profesor,
             descripcion: !!metadata.descripcion,
             solucion: !!metadata.solucion,
+            dificultad: !!metadata.dificultad,
           })
 
           // Guardar nombre de ramo y profesor para búsqueda posterior
@@ -435,6 +495,7 @@ export default function UploadPage() {
       profesor: false,
       descripcion: false,
       solucion: false,
+      dificultad: false,
     })
   }
 
@@ -490,13 +551,12 @@ export default function UploadPage() {
       console.log(`     - file_size: ${formData.file_size} (tipo: ${typeof formData.file_size})`)
       console.log(`     - file_type: "${formData.file_type}" (tipo: ${typeof formData.file_type})`)
       
-      const { data: metadataData, error: metadataError } = await supabase.from("materiales_metadata").insert([
+      const { data: metadataData, error: metadataError } = await supabase.from("material").insert([
         {
           titulo: formData.titulo,
           categoria: formData.categoria,
           semestre: formData.semestre,
           ramo_id: formData.ramo_id,
-          profesor_id: formData.profesor_id,
           carrera: formData.carrera,
           descripcion: formData.descripcion,
           file_url: storagePath, // Usar el path ya guardado
@@ -522,6 +582,21 @@ export default function UploadPage() {
         console.log(`   - file_hash guardado: "${metadataData[0].file_hash}" (tipo: ${typeof metadataData[0].file_hash})`)
         console.log(`   - file_size guardado: ${metadataData[0].file_size}`)
         console.log(`   - file_type guardado: ${metadataData[0].file_type}`)
+
+        if (formData.profesor_id) {
+          const { error: relationError } = await supabase
+            .from("material_profesor")
+            .insert({
+              id_material: metadataData[0].id,
+              id_profesor: formData.profesor_id,
+            })
+
+          if (relationError) {
+            console.error("Error al guardar relación material-profesor:", relationError)
+            alert("El material se subió, pero hubo un problema al asociar el profesor.")
+          }
+        }
+
         setUploadedMaterialId(metadataData[0].id)
       }
 
@@ -594,8 +669,21 @@ export default function UploadPage() {
     setCurrentStep(1)
   }
 
-  const handleSelecctCategoria = (categoria) => {
-    setFormData((prev) => ({ ...prev, categoria }))
+  const handleCategoriaChange = (categoria) => {
+    const config = MATERIAL_TYPE_CONFIG[categoria] || DEFAULT_MATERIAL_CONFIG
+
+    setFormData((prev) => ({
+      ...prev,
+      categoria,
+      profesor_id: config.requiresProfesor ? prev.profesor_id : null,
+      profesorNombre: config.requiresProfesor ? prev.profesorNombre : "",
+      solucion: config.requiresSolucion ? prev.solucion : false,
+      dificultad: config.requiresDificultad ? prev.dificultad : "",
+    }))
+  }
+
+  const handleSelectCategoria = (categoria) => {
+    handleCategoriaChange(categoria)
     setCurrentStep(2)
   }
   const normalizeText = (value) => (value || "").toString().trim().toLowerCase()
@@ -674,7 +762,7 @@ export default function UploadPage() {
     
     try {
       const { data, error } = await supabase
-        .from("profesores")
+        .from("profesor")
         .select("id, nombre")
         .ilike("nombre", `%${search}%`)
         .limit(5);
@@ -702,7 +790,7 @@ export default function UploadPage() {
     
     try {
       const { data, error } = await supabase
-        .from("profesores")
+        .from("profesor")
         .select("id, nombre")
         .ilike("nombre", `%${nombreProfesor}%`)
         .limit(5);
@@ -801,7 +889,7 @@ export default function UploadPage() {
     setIsCreatingProfesor(true);
     try {
       const { data, error } = await supabase
-        .from("profesores")
+        .from("profesor")
         .insert({ nombre: profesorSearch.trim() })
         .select();
       
@@ -839,7 +927,10 @@ export default function UploadPage() {
     setOpenProfesor(false)
   }
 
-  const isFormValid = uploadedFile && !uploadedFile.error && formData.titulo && formData.categoria && formData.carrera
+  const materialConfig = MATERIAL_TYPE_CONFIG[formData.categoria] || DEFAULT_MATERIAL_CONFIG
+  const missingProfesor = materialConfig.requiresProfesor && !formData.profesor_id
+  const missingDificultad = materialConfig.requiresDificultad && !formData.dificultad
+  const isFormValid = uploadedFile && !uploadedFile.error && formData.titulo && formData.categoria && formData.carrera && !missingProfesor && !missingDificultad
   const pendingFieldClass = "bg-yellow-50 border-yellow-200 focus-visible:ring-yellow-300"
 
   if (showSuccess) {
@@ -881,7 +972,7 @@ export default function UploadPage() {
           </div>
         </div>
 
-        {/* PASO 3: Selección de categoría */}
+        {/* PASO 1: Selección de tipo de material */}
         {currentStep === 1 && (
           <div className="space-y-4">
             <Card>
@@ -892,8 +983,29 @@ export default function UploadPage() {
                 <p className="text-sm text-gray-600 mb-4">
                   Elige el tipo de material para comenzar.
                 </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {CATEGORIAS_MATERIAL.map((categoria) => {
+                    const config = MATERIAL_TYPE_CONFIG[categoria] || DEFAULT_MATERIAL_CONFIG
+                    return (
+                      <button
+                        key={categoria}
+                        type="button"
+                        onClick={() => handleSelectCategoria(categoria)}
+                        className="text-left border rounded-lg p-4 transition-all hover:border-blue-500 hover:bg-blue-50"
+                      >
+                        <p className="font-medium text-gray-900">{categoria}</p>
+                        <p className="text-xs text-gray-600 mt-1">{config.subtitle}</p>
+                      </button>
+                    )
+                  })}
+                </div>
               </CardContent>
             </Card>
+            <div className="flex justify-start mt-6">
+              <Button variant="outline" onClick={() => router.back()} className="w-1/3 sm:w-auto">
+                Atrás
+              </Button>
+            </div>
           </div>
         )}
 
@@ -1071,11 +1183,14 @@ export default function UploadPage() {
               </div>
             </div>
 
-            <div className="flex justify-end mt-6">
+            <div className="flex justify-between mt-6">
+              <Button variant="outline" onClick={() => setCurrentStep(1)} className="w-1/3 sm:w-auto">
+                Atrás
+              </Button>
               <Button
                 disabled={!uploadedFile || uploadedFile.error || isAnalyzing || !formData.titulo || !rightsAccepted}
                 onClick={() => setCurrentStep(3)}
-                className="w-full sm:w-auto bg-blue-600"
+                className="w-2/3 sm:w-auto ml-2 bg-blue-600"
               >
                 {isAnalyzing ? "Analizando..." : "Continuar"}
               </Button>
@@ -1128,7 +1243,7 @@ export default function UploadPage() {
                         </div>
                         <Select
                           value={formData.categoria}
-                          onValueChange={(value) => setFormData({ ...formData, categoria: value })}
+                          onValueChange={handleCategoriaChange}
                         >
                           <SelectTrigger id="categoria" className={cn(!formData.categoria && pendingFieldClass)}>
                             <SelectValue placeholder="Selecciona la categoría" />
@@ -1259,51 +1374,57 @@ export default function UploadPage() {
                             </Badge>
                           )}
                         </div>
-                        <Popover open={openProfesor} onOpenChange={setOpenProfesor}>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              role="combobox"
-                              className={cn("w-full justify-between", !formData.profesor_id && pendingFieldClass)}
-                            >
-                              {formData.profesorNombre || "Seleccionar o crear profesor"}
-                              <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-full p-0">
-                            <Command>
-                              <CommandInput 
-                                placeholder="Buscar o crear profesor..." 
-                                value={profesorSearch}
-                                onValueChange={setProfesorSearch}
-                              />
-                              <CommandList>
-                                <CommandEmpty>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="w-full justify-start"
-                                    onClick={createNewProfesor}
-                                    disabled={isCreatingProfesor}
-                                  >
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    Crear "{profesorSearch}"
-                                  </Button>
-                                </CommandEmpty>
-                                <CommandGroup>
-                                  {profesores.map((profesor) => (
-                                    <CommandItem
-                                      key={profesor.id}
-                                      onSelect={() => selectProfesor(profesor)}
+                        {materialConfig.requiresProfesor ? (
+                          <Popover open={openProfesor} onOpenChange={setOpenProfesor}>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                role="combobox"
+                                className={cn("w-full justify-between", !formData.profesor_id && pendingFieldClass)}
+                              >
+                                {formData.profesorNombre || "Seleccionar o crear profesor"}
+                                <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-full p-0">
+                              <Command>
+                                <CommandInput 
+                                  placeholder="Buscar o crear profesor..." 
+                                  value={profesorSearch}
+                                  onValueChange={setProfesorSearch}
+                                />
+                                <CommandList>
+                                  <CommandEmpty>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="w-full justify-start"
+                                      onClick={createNewProfesor}
+                                      disabled={isCreatingProfesor}
                                     >
-                                      {profesor.nombre}
-                                    </CommandItem>
-                                  ))}
-                                </CommandGroup>
-                              </CommandList>
-                            </Command>
-                          </PopoverContent>
-                        </Popover>
+                                      <Plus className="mr-2 h-4 w-4" />
+                                      Crear "{profesorSearch}"
+                                    </Button>
+                                  </CommandEmpty>
+                                  <CommandGroup>
+                                    {profesores.map((profesor) => (
+                                      <CommandItem
+                                        key={profesor.id}
+                                        onSelect={() => selectProfesor(profesor)}
+                                      >
+                                        {profesor.nombre}
+                                      </CommandItem>
+                                    ))}
+                                  </CommandGroup>
+                                </CommandList>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
+                        ) : (
+                          <div className="rounded-md border bg-gray-50 px-3 py-2 text-sm text-gray-600">
+                            Para {formData.categoria || "este tipo de material"}, no se requiere profesor.
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1337,52 +1458,56 @@ export default function UploadPage() {
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <Label htmlFor="dificultad">Dificultad</Label>
-                            {aiGenerated.dificultad && (
-                              <Badge variant="secondary" className="text-xs">
-                                <Sparkles className="w-3 h-3 mr-1" />
-                                IA
-                              </Badge>
-                            )}
+                        {materialConfig.requiresDificultad && (
+                          <div>
+                            <div className="flex items-center gap-2 mb-2">
+                              <Label htmlFor="dificultad">Dificultad</Label>
+                              {aiGenerated.dificultad && (
+                                <Badge variant="secondary" className="text-xs">
+                                  <Sparkles className="w-3 h-3 mr-1" />
+                                  IA
+                                </Badge>
+                              )}
+                            </div>
+                            <Select
+                              value={formData.dificultad}
+                              onValueChange={(value) => setFormData({ ...formData, dificultad: value })}
+                            >
+                              <SelectTrigger id="dificultad" className={cn(!formData.dificultad && pendingFieldClass)}>
+                                <SelectValue placeholder="Selecciona dificultad" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Fácil">Fácil</SelectItem>
+                                <SelectItem value="Media">Media</SelectItem>
+                                <SelectItem value="Difícil">Difícil</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </div>
-                          <Select
-                            value={formData.dificultad}
-                            onValueChange={(value) => setFormData({ ...formData, dificultad: value })}
-                          >
-                            <SelectTrigger id="dificultad" className={cn(!formData.dificultad && pendingFieldClass)}>
-                              <SelectValue placeholder="Selecciona dificultad" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Fácil">Fácil</SelectItem>
-                              <SelectItem value="Media">Media</SelectItem>
-                              <SelectItem value="Difícil">Difícil</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
+                        )}
 
-                        <div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <Label htmlFor="solucion">Incluye solución</Label>
-                            {aiGenerated.solucion && (
-                              <Badge variant="secondary" className="text-xs">
-                                <Sparkles className="w-3 h-3 mr-1" />
-                                IA
-                              </Badge>
-                            )}
+                        {materialConfig.requiresSolucion && (
+                          <div>
+                            <div className="flex items-center gap-2 mb-2">
+                              <Label htmlFor="solucion">Incluye solución</Label>
+                              {aiGenerated.solucion && (
+                                <Badge variant="secondary" className="text-xs">
+                                  <Sparkles className="w-3 h-3 mr-1" />
+                                  IA
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Switch
+                                id="solucion"
+                                checked={formData.solucion}
+                                onCheckedChange={(checked) => setFormData({ ...formData, solucion: checked })}
+                              />
+                              <Label htmlFor="solucion" className="cursor-pointer text-sm text-muted-foreground">
+                                {formData.solucion ? "Sí" : "No"}
+                              </Label>
+                            </div>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <Switch
-                              id="solucion"
-                              checked={formData.solucion}
-                              onCheckedChange={(checked) => setFormData({ ...formData, solucion: checked })}
-                            />
-                            <Label htmlFor="solucion" className="cursor-pointer text-sm text-muted-foreground">
-                              {formData.solucion ? "Sí" : "No"}
-                            </Label>
-                          </div>
-                        </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1395,7 +1520,7 @@ export default function UploadPage() {
                 Atrás
               </Button>
               <Button
-                disabled={!formData.titulo || !formData.categoria || !formData.carrera || !rightsAccepted}
+                disabled={!formData.titulo || !formData.categoria || !formData.carrera || !rightsAccepted || missingProfesor || missingDificultad}
                 onClick={(e) => handleSubmit(e)}
                 className="w-2/3 ml-2 bg-blue-600"
               >

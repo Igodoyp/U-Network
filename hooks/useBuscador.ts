@@ -11,6 +11,13 @@ export interface Material {
   semestre: string | null
   nombre_ramo: string | null
   nombre_profesor: string | null
+  profesores_list?: Array<{
+    profesor: {
+      id: string | number
+      nombre: string
+      autorizacion: boolean | null
+    } | null
+  }>
   created_at: string
   score: number | null
   descargas: number | null

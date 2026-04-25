@@ -60,7 +60,7 @@ export default function SubjectsPage() {
         .from("ramos")
         .select(`
           *,
-          materialesMeta:materiales_metadata(count)
+          materialesMeta:material(count)
         `, { count: "exact" })
         .order("carrera", { ascending: true })
         .order("semestre", { ascending: true })
@@ -109,7 +109,7 @@ export default function SubjectsPage() {
         .from("ramos")
         .select(`
           *,
-          materialesMeta:materiales_metadata(count)
+          materialesMeta:material(count)
         `, { count: "exact" })
         .ilike("nombre", `%${searchTerm}%`)
         .order("carrera", { ascending: true })
@@ -220,7 +220,7 @@ export default function SubjectsPage() {
     try {
       // Verificar si hay materiales asociados
       const { count, error: countError } = await supabase
-        .from("materiales_metadata")
+        .from("material")
         .select("id", { count: "exact", head: true })
         .eq("ramo_id", selectedSubject.id)
       
@@ -256,7 +256,7 @@ export default function SubjectsPage() {
     setIsLoading(true)
     try {
       const { data, error } = await supabase
-        .from("materiales_metadata")
+        .from("material")
         .select(`
           id,
           titulo,

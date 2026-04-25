@@ -54,7 +54,7 @@ export default function MaterialsPage() {
     setIsLoading(true)
     try {
       let query = supabase
-        .from("materiales_metadata")
+        .from("material")
         .select(`
           *,
           ramos:ramo_id (
@@ -62,9 +62,7 @@ export default function MaterialsPage() {
             carrera,
             semestre
           ),
-          profesores:profesor_id (
-            nombre
-          ),
+          profesores_list:material_profesor ( profesor ( id, nombre, autorizacion ) ),
           usuarios:autor_id (
             nombre
           )
@@ -118,7 +116,7 @@ export default function MaterialsPage() {
     setIsLoading(true)
     try {
       const { data, error } = await supabase
-        .from("materiales_metadata")
+        .from("material")
         .select(`
           *,
           ramos:ramo_id (
@@ -126,9 +124,7 @@ export default function MaterialsPage() {
             carrera,
             semestre
           ),
-          profesores:profesor_id (
-            nombre
-          ),
+          profesores_list:material_profesor ( profesor ( id, nombre, autorizacion ) ),
           usuarios:autor_id (
             nombre
           )
@@ -151,7 +147,7 @@ export default function MaterialsPage() {
   const toggleMaterialVisibility = async (materialId, currentlyHidden) => {
     try {
       const { error } = await supabase
-        .from("materiales_metadata")
+        .from("material")
         .update({ oculto: !currentlyHidden })
         .eq("id", materialId)
       
@@ -177,7 +173,7 @@ export default function MaterialsPage() {
     try {
       // Eliminar el registro de la base de datos
       const { error } = await supabase
-        .from("materiales_metadata")
+        .from("material")
         .delete()
         .eq("id", selectedMaterial.id)
       

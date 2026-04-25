@@ -70,7 +70,7 @@ export default function Dashboard() {
             try {
                 // Consulta base para todos los materiales
                 let query = supabase
-                    .from("materiales_metadata")
+                    .from("material")
                     .select(`
                         id,
                         titulo,
@@ -80,11 +80,7 @@ export default function Dashboard() {
                           carrera,
                           semestre
                         ),
-                        profesor_id,
-                        profesores:profesor_id (
-                          id, 
-                          nombre
-                        ),
+                                                profesores_list:material_profesor ( profesor ( id, nombre, autorizacion ) ),
                         carrera,
                         semestre,
                         autor_id,
@@ -121,12 +117,11 @@ export default function Dashboard() {
                 // mostrar material de la misma carrera ordenado por mejor valorados
                 if (activeTab === "recommended" && (!data || data.length === 0) && userData?.carrera) {
                     const fallback = await supabase
-                        .from("materiales_metadata")
+                        .from("material")
                         .select(`
                             id, titulo, ramo_id,
                             ramos:ramo_id (nombre, carrera, semestre),
-                            profesor_id,
-                            profesores:profesor_id (id, nombre),
+                            profesores_list:material_profesor ( profesor ( id, nombre, autorizacion ) ),
                             carrera, semestre, autor_id, categoria,
                             file_url, descripcion, created_at,
                             val_positivas, val_negativas, descargas, solucion, status
@@ -156,8 +151,7 @@ export default function Dashboard() {
                     subject: item.ramos ? item.ramos.nombre : "No especificado",
                     ramo_id: item.ramo_id,
                     career: item.carrera,
-                    // Obtener el nombre del profesor desde la relación
-                    professor: item.profesores ? item.profesores.nombre : "No especificado",
+                    professor: item.profesores_list?.map((rel) => rel.profesor?.nombre).filter(Boolean).join(", ") || "No especificado",
                     semester: item.semestre || "No especificado",
                     date: new Date(item.created_at).toLocaleDateString("es-CL"),
                     rating: item.val_positivas + item.val_negativas > 0

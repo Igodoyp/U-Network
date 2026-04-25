@@ -11,7 +11,7 @@ const useFilePreview = (documentId) => {
       setLoading(true);
       try {
         const { data, error: fetchError } = await supabase
-          .from('materiales_metadata')
+          .from('material')
           .select('file_url, tipo_archivo')
           .eq('id', documentId)
           .single();

@@ -33,7 +33,7 @@ export default function AdminDashboard() {
         
         // Total de materiales
         const { count: materialsCount, error: materialsError } = await supabase
-          .from("materiales_metadata")
+          .from("material")
           .select("*", { count: "exact", head: true })
         
         // Total de ramos
@@ -49,7 +49,7 @@ export default function AdminDashboard() {
         
         // Materiales subidos hoy
         const { count: materialsTodayCount, error: materialsTodayError } = await supabase
-          .from("materiales_metadata")
+          .from("material")
           .select("*", { count: "exact", head: true })
           .gte("created_at", todayStr)
         

@@ -120,7 +120,7 @@ export default function AdminSettingsPage() {
       
       // Contar materiales
       const { count: materialCount } = await supabase
-        .from("materiales_metadata")
+        .from("material")
         .select("*", { count: "exact", head: true })
       
       // Contar reportes

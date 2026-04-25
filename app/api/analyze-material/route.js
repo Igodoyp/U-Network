@@ -62,7 +62,7 @@ export async function POST(request) {
     
     try {
       const result = await supabase
-        .from("materiales_metadata")
+        .from("material")
         .select("id, titulo, file_hash")
         .eq("file_hash", hash)
         .limit(1)
@@ -89,7 +89,7 @@ export async function POST(request) {
       console.log("   ⚠️ No encontró con búsqueda exacta, intentando con LIKE...")
       try {
         const result = await supabase
-          .from("materiales_metadata")
+          .from("material")
           .select("id, titulo, file_hash")
           .ilike("file_hash", `${hash.substring(0, 16)}%`)
           .limit(1)

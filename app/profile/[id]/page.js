@@ -123,7 +123,7 @@ export default function UserProfilePage() {
 
         // Fetch user materials
         const { data: materials, error: materialsError } = await supabase
-          .from("materiales_metadata")
+          .from("material")
           .select(`
             id,
             titulo,
@@ -133,8 +133,7 @@ export default function UserProfilePage() {
             descargas,
             ramo_id,
             ramos(nombre),
-            profesor_id,
-            profesores(nombre),
+            profesores_list:material_profesor ( profesor ( id, nombre, autorizacion ) ),
             status
           `)
           .eq("autor_id", id)

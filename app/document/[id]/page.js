@@ -88,7 +88,7 @@ export default function DocumentPage() {
       try {
         // 1. Obtener los datos del documento
         const { data: docData, error: docError } = await supabase
-          .from("materiales_metadata")
+          .from("material")
           .select(`
             *,
             ramos:ramo_id (
@@ -98,10 +98,7 @@ export default function DocumentPage() {
               trimestre,
               carrera
             ),
-            profesores:profesor_id (
-              id,
-              nombre
-            )
+            profesores_list:material_profesor ( profesor ( id, nombre, autorizacion ) )
           `)
           .eq("id", documentId)
           .single();
@@ -172,7 +169,7 @@ export default function DocumentPage() {
           // Solo incrementar el contador si es necesario (primera vista o usuario no autenticado)
           if (incrementView) {
             const { error: updateError } = await supabase
-              .from("materiales_metadata")
+              .from("material")
               .update({ vistas: (docData.vistas || 0) + 1 })
               .eq("id", documentId);
             
@@ -248,8 +245,7 @@ export default function DocumentPage() {
           date: new Date(docData.created_at).toLocaleDateString("es-CL"),
           // Usar el nombre del ramo desde la relación
           ramo: docData.ramos ? docData.ramos.nombre : "No especificado",
-          // Usar el nombre del profesor desde la relación
-          profesor: docData.profesores ? docData.profesores.nombre : "No especificado",
+          profesor: docData.profesores_list?.map((rel) => rel.profesor?.nombre).filter(Boolean).join(", ") || "No especificado",
           uploader: authorData || {
             name: "Usuario",
             avatar: null,
@@ -267,13 +263,13 @@ export default function DocumentPage() {
         if (authorData) {
           // Contar publicaciones del autor
           const { count: uploadsCount } = await supabase
-            .from("materiales_metadata")
+            .from("material")
             .select("id", { count: "exact" })
             .eq("autor_id", authorData.id)
 
           // Calcular rating promedio del autor
           const { data: ratings } = await supabase
-            .from("materiales_metadata")
+            .from("material")
             .select("val_positivas, val_negativas")
             .eq("autor_id", authorData.id)
 
@@ -391,7 +387,7 @@ export default function DocumentPage() {
         
         // Obtener el valor actual del contador
         const { data: currentData, error: fetchError } = await supabase
-          .from("materiales_metadata")
+          .from("material")
           .select("descargas")
           .eq("id", documentId)
           .single();
@@ -408,7 +404,7 @@ export default function DocumentPage() {
         console.log("Actualizando contador de", currentCount, "a", newCount);
         
         const { error: updateError } = await supabase
-          .from("materiales_metadata")
+          .from("material")
           .update({ descargas: newCount })
           .eq("id", documentId);
         
@@ -490,7 +486,7 @@ export default function DocumentPage() {
         // 2. Actualizar contador en la tabla materiales_metadata
         const field = rating === "up" ? "val_positivas" : "val_negativas"
         const { error: updateError } = await supabase
-          .from("materiales_metadata")
+          .from("material")
           .update({ [field]: Math.max(0, document[field] - 1) })
           .eq("id", documentId)
       
@@ -566,7 +562,7 @@ export default function DocumentPage() {
           }
 
           const { error: updateMetaError } = await supabase
-            .from("materiales_metadata")
+            .from("material")
             .update({
               val_positivas: updatedDoc.val_positivas,
               val_negativas: updatedDoc.val_negativas
@@ -603,7 +599,7 @@ export default function DocumentPage() {
         // Incrementar el contador correspondiente
         const field = isPositive ? "val_positivas" : "val_negativas"
         const { error: updateError } = await supabase
-          .from("materiales_metadata")
+          .from("material")
           .update({ [field]: (document[field] || 0) + 1 })
           .eq("id", documentId)
       
@@ -647,7 +643,7 @@ export default function DocumentPage() {
   const refreshDocumentData = async () => {
     try {
       const { data: refreshedData, error } = await supabase
-        .from("materiales_metadata")
+        .from("material")
         .select("*")
         .eq("id", documentId)
         .single()
@@ -720,7 +716,7 @@ export default function DocumentPage() {
       if (error) throw error;
       // 3. Cambiar el status de la publicación a 'review'
       const { error: statusError } = await supabase
-        .from("materiales_metadata")
+        .from("material")
         .update({ status: "review" })
         .eq("id", documentId);
       if (statusError) {
@@ -734,7 +730,7 @@ export default function DocumentPage() {
       if (!countError && count >= 5) {
         // Si hay 5 o más reportes, ocultar automáticamente el material
         const { error: updateError } = await supabase
-          .from("materiales_metadata")
+          .from("material")
           .update({ oculto: true })
           .eq("id", documentId);
         if (updateError) {
@@ -954,7 +950,14 @@ export default function DocumentPage() {
                 </div>
                 <div className="flex items-center gap-2 text-gray-600">
                   <User className="w-4 h-4" />
-                  <span>{document.profesor || "No especificado"}</span>
+                  <span>
+                    {document.profesores_list?.length
+                      ? document.profesores_list
+                          .map((rel) => rel.profesor?.nombre)
+                          .filter(Boolean)
+                          .join(", ")
+                      : "No especificado"}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2 text-gray-600">
                   <Calendar className="w-4 h-4" />

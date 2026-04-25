@@ -191,7 +191,7 @@ export default function SearchPage() {
       try {
         // Construir la consulta base
         let query = supabase
-          .from("materiales_metadata")
+          .from("material")
           .select(`
             id,
             titulo,
@@ -202,11 +202,7 @@ export default function SearchPage() {
               carrera,
               semestre
             ),
-            profesor_id,
-            profesores:profesor_id (
-              id, 
-              nombre
-            ),
+            profesores_list:material_profesor ( profesor ( id, nombre, autorizacion ) ),
             carrera,
             semestre,
             created_at,
@@ -278,7 +274,7 @@ export default function SearchPage() {
           subject: item.ramos ? item.ramos.nombre : "No especificado",
           ramo_id: item.ramo_id,
           career: item.carrera,
-          professor: item.profesores ? item.profesores.nombre : "No especificado",
+          professor: item.profesores_list?.map((rel) => rel.profesor?.nombre).filter(Boolean).join(", ") || "No especificado",
           semester: item.semestre || "No especificado",
           date: new Date(item.created_at).toLocaleDateString("es-CL"),
           rating: item.val_positivas + item.val_negativas > 0

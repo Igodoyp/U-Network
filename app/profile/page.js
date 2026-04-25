@@ -78,7 +78,7 @@ const ProfilePage = () => {
       try {
         // Actualizar la consulta para incluir el campo solucion
         const { data, error } = await supabase
-          .from("materiales_metadata")
+          .from("material")
           .select(`
             id,
             titulo,
@@ -88,11 +88,7 @@ const ProfilePage = () => {
               carrera,
               semestre
             ),
-            profesor_id,
-            profesores:profesor_id (
-              id, 
-              nombre
-            ),
+            profesores_list:material_profesor ( profesor ( id, nombre, autorizacion ) ),
             carrera,
             semestre,
             autor_id,
@@ -128,7 +124,7 @@ const ProfilePage = () => {
           downloads: m.descargas ?? 0,
           file_url: m.file_url,
           description: m.descripcion,
-          profesor: m.profesores ? m.profesores.nombre : "No especificado",
+          profesor: m.profesores_list?.map((rel) => rel.profesor?.nombre).filter(Boolean).join(", ") || "No especificado",
           semestre: m.semestre,
           carrera: m.carrera,
           hasSolution: m.solucion || false // Añadir hasSolution
@@ -356,7 +352,7 @@ const ProfilePage = () => {
     try {
       // 1. Eliminar el registro de la base de datos
       const { data: deletedRows, error: dbError } = await supabase
-        .from("materiales_metadata")
+        .from("material")
         .delete()
         .eq("id", materialId)
         .eq("autor_id", userData.id) // Verificar que sea el propietario

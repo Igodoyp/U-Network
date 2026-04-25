@@ -40,7 +40,7 @@ export default function AdminReportsPage() {
           estado,
           created_at,
           material_id,
-          materiales_metadata:material_id (
+          material:material_id (
             id,
             titulo,
             categoria,
@@ -88,7 +88,7 @@ export default function AdminReportsPage() {
   const toggleMaterialVisibility = async (materialId, currentlyHidden) => {
     try {
       const { error } = await supabase
-        .from("materiales_metadata")
+        .from("material")
         .update({ oculto: !currentlyHidden })
         .eq("id", materialId)
 
@@ -142,17 +142,17 @@ export default function AdminReportsPage() {
                              report.tipo_reporte}
                           </h3>
                           <Badge variant="outline" className={
-                            report.materiales_metadata?.oculto 
+                            report.material?.oculto 
                               ? "bg-red-50 text-red-700 border-red-200"
                               : "bg-green-50 text-green-700 border-green-200"
                           }>
-                            {report.materiales_metadata?.oculto ? "Material oculto" : "Material visible"}
+                            {report.material?.oculto ? "Material oculto" : "Material visible"}
                           </Badge>
                         </div>
                         
                         <div>
                           <p className="text-sm text-gray-700 font-medium">Material reportado:</p>
-                          <p className="text-sm">{report.materiales_metadata?.titulo || "Material no disponible"}</p>
+                          <p className="text-sm">{report.material?.titulo || "Material no disponible"}</p>
                         </div>
                         
                         {report.descripcion && (
@@ -175,12 +175,12 @@ export default function AdminReportsPage() {
                         <Button 
                           onClick={() => toggleMaterialVisibility(
                             report.material_id, 
-                            report.materiales_metadata?.oculto
+                            report.material?.oculto
                           )}
-                          variant={report.materiales_metadata?.oculto ? "outline" : "destructive"}
+                          variant={report.material?.oculto ? "outline" : "destructive"}
                           size="sm"
                         >
-                          {report.materiales_metadata?.oculto 
+                          {report.material?.oculto 
                             ? "Restaurar material" 
                             : "Ocultar material"}
                         </Button>

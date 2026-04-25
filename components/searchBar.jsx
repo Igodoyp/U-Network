@@ -16,6 +16,14 @@ const SearchBar = ({
     const [searchQuery, setSearchQuery] = React.useState("");
     const [showFilters, setShowFilters] = React.useState(false);
 
+    const handleInputChange = (e) => {
+        onChange?.(e.target.value);
+    };
+
+    const handleCLear = () => {
+        onChange?.("");
+    }; 
+
     return (
         <div className="bg-white shadow-sm border-b sticky top-16 sm:top-28 z-30">
             <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4">
