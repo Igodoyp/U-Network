@@ -6,7 +6,7 @@ import { CATEGORIAS_MATERIAL } from "@/lib/constants"
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  process.env.SUPABASE_SERVICE_ROLE_KEY
 )
 
 const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
@@ -152,8 +152,25 @@ export async function POST(request) {
     console.log(`📄 Mime type detectado: ${mimeType}`)
     const base64Data = buffer.toString('base64')
     console.log(`✅ Base64 codificado: ${base64Data.length} caracteres`)
+    // 5. Intentar crear signed URL y analizar con Gemini usando referencia a archivo
+    console.log("3️⃣ Intentando crear signed URL para evitar enviar inline el archivo...")
+    let signedUrl = null
+    try {
+      const { data: urlData, error: urlError } = await supabase.storage
+        .from("materiales")
+        .createSignedUrl(filePath, 60) // 60 segundos
 
-    // 5. Analizar con Gemini usando input multimodal
+      if (urlError) {
+        console.warn("⚠️ No se pudo crear signed URL:", urlError.message)
+      } else if (urlData && urlData.signedUrl) {
+        signedUrl = urlData.signedUrl
+        console.log("✅ Signed URL creada correctamente")
+      }
+    } catch (urlEx) {
+      console.warn("⚠️ Excepción al crear signed URL:", urlEx.message)
+    }
+
+    // 5. Analizar con Gemini usando input multimodal (preferir fileUri)
     const prompt = `
 Eres un experto moderador y clasificador de material académico para la facultad de Ingeniería de la UDD. 
 Tu tarea es analizar este documento/imagen. Primero, debes determinar si es material académico válido y seguro. Luego, extrae su información.
@@ -184,33 +201,31 @@ IMPORTANTE: Devuelve ÚNICA Y EXCLUSIVAMENTE un objeto JSON válido. No uses blo
     try {
       // Construir contents con estructura correcta para el nuevo SDK
       console.log("3️⃣ Enviando a Gemini 2.0 Flash...")
-      const contents = [
-        { type: "text", text: prompt },
-      ]
+      const userParts = [{ text: prompt }]
 
-      // Agregar archivo como contenido multimodal inline
-      if (mimeType.startsWith("image/")) {
-        console.log("  → Detectado como imagen")
-        contents.push({
-          type: "image",
-          inlineData: {
-            data: base64Data,
-            mimeType: mimeType,
-          },
-        })
+      if (signedUrl) {
+        userParts.push({ fileData: { fileUri: signedUrl, mimeType } })
       } else {
-        // Para PDFs y otros documentos
-        console.log("  → Detectado como documento")
-        contents.push({
-          type: "file",
-          inlineData: {
-            data: base64Data,
-            mimeType: mimeType,
-          },
-        })
+        // Fallback: enviar inline (menos eficiente y puede agotar cuota)
+        userParts.push({ inlineData: { data: base64Data, mimeType } })
       }
 
-      console.log(`  → Estructura de contenido: ${JSON.stringify(contents.map((c, i) => ({ index: i, type: c.type, hasData: !!c.inlineData?.data })))}`)
+      const contents = [
+        {
+          role: "user",
+          parts: userParts,
+        },
+      ]
+
+      console.log(
+        `  → Estructura de contenido: ${JSON.stringify(
+          contents.map((c, i) => ({ index: i, role: c.role, parts: c.parts.length }))
+        )}`
+      )
+
+      // Log size estimate for debugging quota issues
+      const estimatedPayloadSize = signedUrl ? base64Data.length * 0.75 : base64Data.length
+      console.log(`  → Tamaño estimado del payload (bytes): ${Math.round(estimatedPayloadSize)}`)
 
       result = await client.models.generateContent({
         model: "gemini-2.0-flash",
@@ -224,9 +239,15 @@ IMPORTANTE: Devuelve ÚNICA Y EXCLUSIVAMENTE un objeto JSON válido. No uses blo
       console.error("❌ Error generando contenido:", genError.message)
       console.error("  Details:", genError)
       await supabase.storage.from("materiales").remove([filePath])
+      const statusCode = genError?.status || genError?.error?.code || 500
       return NextResponse.json(
-        { error: "Error al analizar el documento con IA" },
-        { status: 500 }
+        {
+          error:
+            statusCode === 429
+              ? "Gemini agotó su cuota o está temporalmente saturado"
+              : "Error al analizar el documento con IA",
+        },
+        { status: statusCode }
       )
     }
 

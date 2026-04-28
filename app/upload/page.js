@@ -1188,7 +1188,7 @@ export default function UploadPage() {
                 Atrás
               </Button>
               <Button
-                disabled={!uploadedFile || uploadedFile.error || isAnalyzing || !formData.titulo || !rightsAccepted}
+                disabled={!uploadedFile || uploadedFile.error || isAnalyzing || !rightsAccepted}
                 onClick={() => setCurrentStep(3)}
                 className="w-2/3 sm:w-auto ml-2 bg-blue-600"
               >

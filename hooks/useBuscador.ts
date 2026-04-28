@@ -77,10 +77,33 @@ export function useBuscador(options: UseBuscadorOptions = {}) {
           limite: limit,
         }
 
-        const { data, error: rpcError } = await supabase.rpc(rpcName, args)
-        if (rpcError) throw rpcError
+        let rpcData: unknown = null
+        let rpcError: unknown = null
 
-        setResultados((data ?? []) as Material[])
+        try {
+          const { data, error } = await supabase.rpc(rpcName, args)
+          rpcData = data
+          rpcError = error
+        } catch (rpcException) {
+          rpcError = rpcException
+        }
+
+        if (!rpcError) {
+          setResultados((rpcData ?? []) as Material[])
+          return
+        }
+
+        // Fallback while DB RPC is being updated to new schema/table names.
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from("material")
+          .select("id")
+          .eq("status", "public")
+          .or(`titulo.ilike.%${normalizedQuery}%,descripcion.ilike.%${normalizedQuery}%`)
+          .limit(limit)
+
+        if (fallbackError) throw fallbackError
+
+        setResultados((fallbackData ?? []) as Material[])
       } catch (err) {
         console.error("Error en búsqueda:", err)
         setError(err)

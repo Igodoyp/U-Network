@@ -671,7 +671,13 @@ export default function SearchPage() {
         {/* Contenido principal */}
         <div className="flex-1">
           {/* Barra de búsqueda */}
-          <SearchBar />
+          <SearchBar
+            value={searchQuery}
+            onChange={setSearchQuery}
+            onSubmit={setSearchQuery}
+            showFilterButton
+            onFilterClick={() => setShowFilters(true)}
+          />
 
           {/* Filtros activos */}
           {hasActiveFilters && (
