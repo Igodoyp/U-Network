@@ -52,7 +52,7 @@ export interface SignUpOptions {
   email: string
   password: string
   nombre: string
-  carrera: string
+  id_carrera: number
   anio: string
   descripcion?: string
   abierto?: boolean
@@ -61,7 +61,7 @@ export interface SignUpOptions {
 /**
  * Registra un nuevo usuario en Supabase Auth
  */
-export async function signUp({ email, password, nombre, carrera, anio, descripcion, abierto }: SignUpOptions) {
+export async function signUp({ email, password, nombre, id_carrera, anio, descripcion, abierto }: SignUpOptions) {
   const normalizedEmail = normalizeEmail(email)
   
   const { data, error } = await supabase.auth.signUp({
@@ -142,7 +142,7 @@ export interface Usuario {
   id?: string
   correo: string
   nombre: string
-  carrera: string
+  id_carrera: number
   anio: string
   descripcion?: string
   abierto?: boolean
@@ -172,7 +172,7 @@ export async function getUsuarioByCorreo(email: string) {
 export async function getUsuarioById(userId: string) {
   const { data, error } = await supabase
     .from("usuarios")
-    .select("id, nombre, correo, carrera, avatar, anio, university, fecha_registro")
+    .select("id, nombre, correo, id_carrera, carrera(nombre), avatar, anio, university, fecha_registro")
     .eq("id", userId)
     .single()
 
@@ -223,18 +223,18 @@ export interface Ramo {
   nombre: string
   semestre: number | null
   trimestre: number | null
-  carrera: string
+  id_carrera: number
   anio?: number
 }
 
 /**
  * Obtiene semestres únicos disponibles para una carrera
  */
-export async function getSemestresPorCarrera(carrera: string) {
+export async function getSemestresPorCarrera(id_carrera: number) {
   const { data, error } = await supabase
     .from("ramos")
     .select("semestre")
-    .eq("carrera", carrera)
+    .eq("id_carrera", id_carrera)
     .order("semestre", { ascending: true })
 
   if (error) {
@@ -252,12 +252,12 @@ export async function getSemestresPorCarrera(carrera: string) {
  * Los ramos semestrales se agrupan por semestre (1-2 = año 1, 3-4 = año 2, etc.)
  * Los ramos trimestrales se agrupan por trimestre (1-3 = año 1, 4-6 = año 2, etc.)
  */
-export async function getRamosPorCarrera(carrera: string): Promise<{ data: Record<number, Ramo[]>, error: any }> {
+export async function getRamosPorCarrera(id_carrera: number): Promise<{ data: Record<number, Ramo[]>, error: any }> {
   try {
     const { data, error } = await supabase
       .from("ramos")
-      .select("id, nombre, semestre, trimestre, carrera")
-      .eq("carrera", carrera)
+      .select("id, nombre, semestre, trimestre, id_carrera")
+      .eq("id_carrera", id_carrera)
 
     if (error) {
       console.error("Error al obtener ramos por carrera:", error)
@@ -355,3 +355,5 @@ export async function insertUsuariosIntereses(records: UsuarioInteres[]) {
 
   return { error }
 }
+
+

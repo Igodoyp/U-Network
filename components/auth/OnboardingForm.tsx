@@ -59,6 +59,15 @@ export function OnboardingForm({
     resolvedInitial || (needsProfile ? 'profile' : 'subjects')
   )
   const [carrera, setCarrera] = useState(carreraActual || '')
+  const [carrerasList, setCarrerasList] = useState<{id: number, nombre: string}[]>([])
+
+  useEffect(() => {
+    const fetchCarreras = async () => {
+      const { data } = await supabase.from('carrera').select('id, nombre').order('nombre')
+      if (data) setCarrerasList(data)
+    }
+    fetchCarreras()
+  }, [])
   const [nombre, setNombre] = useState(userName || '')
 
   // Sincronizar paso con el padre
@@ -93,7 +102,7 @@ export function OnboardingForm({
       if (currentStep !== 'subjects' || !carrera) return
 
       try {
-        const { data: ramosAgrupados, error } = await authService.getRamosPorCarrera(carrera)
+        const { data: ramosAgrupados, error } = await authService.getRamosPorCarrera(parseInt(carrera))
 
         if (error) {
           console.error("Error al obtener ramos:", error)
@@ -274,8 +283,8 @@ export function OnboardingForm({
                 <SelectValue placeholder="Qué estudias?" />
               </SelectTrigger>
               <SelectContent>
-                {CARRERAS.map((c) => (
-                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                {carrerasList.map((c) => (
+                  <SelectItem key={c.id} value={c.id.toString()}>{c.nombre}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -373,7 +382,7 @@ export function OnboardingForm({
         <div className="space-y-1">
           <div className="flex items-center justify-between px-1">
             <Label className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-              Ramos de {carrera}
+              Ramos de {carrerasList.find((c) => c.id.toString() === carrera)?.nombre || ""}
             </Label>
             {ramoSearch && (
               <span className="text-xs text-gray-400">
@@ -471,3 +480,4 @@ export function OnboardingForm({
     </Card>
   )
 }
+

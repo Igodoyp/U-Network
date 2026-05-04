@@ -20,7 +20,7 @@ export const UserProvider = ({ children }) => {
           // Si hay sesión, obtener datos completos por ID
           const { data, error } = await supabase
             .from("usuarios")
-            .select("id, nombre, correo, carrera, avatar, anio, university, fecha_registro, rol")
+            .select("id, nombre, correo, id_carrera, carrera(nombre), avatar, anio, university, fecha_registro, rol")
             .eq("id", session.user.id)
             .single()
 

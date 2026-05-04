@@ -85,7 +85,7 @@ export default function UserProfilePage() {
             id, 
             nombre, 
             correo, 
-            carrera, 
+            id_carrera, carrera(nombre), 
             anio,
             avatar,
             fecha_registro,
@@ -276,7 +276,7 @@ export default function UserProfilePage() {
               <div className="space-y-1 text-gray-600">
                 <p className="flex items-center justify-center md:justify-start gap-2">
                   <School className="w-4 h-4" />
-                  {profileUser.carrera || "Carrera no especificada"}
+                  {profileUser.carrera?.nombre || "Carrera no especificada"}
                 </p>
                 {Number(profileUser.anio) ? (
                   <p className="flex items-center justify-center md:justify-start gap-2">

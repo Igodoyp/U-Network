@@ -77,16 +77,26 @@ const getOrdinalYear = (year) => {
 export default function SettingsPage() {
   const router = useRouter()
   const { userData, setUserData, clearUserData } = useUserContext()
+  const [carreras, setCarreras] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
     nombre: "",
     apellido: "",
-    carrera: "",
+    id_carrera: null,
     anio: "",
   })
   const [originalData, setOriginalData] = useState({})
   const [selectedFile, setSelectedFile] = useState(null)
   const [previewUrl, setPreviewUrl] = useState("")
+
+  // Cargar carreras de base de datos
+  useEffect(() => {
+    const fetchCarreras = async () => {
+      const { data } = await supabase.from('carrera').select('id, nombre').order('nombre')
+      if (data) setCarreras(data)
+    }
+    fetchCarreras()
+  }, [])
 
   // Cargar datos del usuario al montar
   useEffect(() => {
@@ -100,7 +110,7 @@ export default function SettingsPage() {
       const datosIniciales = {
         nombre,
         apellido,
-        carrera: userData.carrera || "",
+        id_carrera: userData.id_carrera || null,
         anio: userData.anio || "",
       }
 
@@ -169,7 +179,7 @@ export default function SettingsPage() {
         .from("usuarios")
         .update({
           nombre: nombreCompleto,
-          carrera: formData.carrera,
+          id_carrera: formData.id_carrera,
           anio: formData.anio,
           avatar: avatarUrl
         })
@@ -182,7 +192,7 @@ export default function SettingsPage() {
         setUserData({
           ...userData,
           nombre: nombreCompleto,
-          carrera: formData.carrera,
+          id_carrera: formData.id_carrera,
           anio: formData.anio,
           avatar: avatarUrl
         })
@@ -369,16 +379,16 @@ export default function SettingsPage() {
                     Carrera
                   </Label>
                   <Select
-                    value={formData.carrera}
-                    onValueChange={(value) => setFormData({ ...formData, carrera: value })}
+                    value={formData.id_carrera?.toString()}
+                    onValueChange={(value) => setFormData({ ...formData, id_carrera: parseInt(value) })}
                   >
                     <SelectTrigger className="focus:border-purple-500">
                       <SelectValue placeholder="Selecciona tu carrera" />
                     </SelectTrigger>
                     <SelectContent>
-                      {carreras.map((carrera) => (
-                        <SelectItem key={carrera} value={carrera}>
-                          {carrera}
+                      {carreras.map((c) => (
+                        <SelectItem key={c.id} value={c.id.toString()}>
+                          {c.nombre}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -519,5 +529,7 @@ export default function SettingsPage() {
     </div>
   )
 }
+
+
 
 

@@ -41,16 +41,8 @@ export default function ConectarPage() {
       setIsLoading(true)
       try {
         // Cargar lista de carreras para el filtro
-        setCarreras([
-          "Ingeniería Plan Común",
-          "Ingeniería Civil Industrial",
-          "Ingeniería Civil en BioMedicina",
-          "Ingeniería Civil en Informática e Innovación Tecnológica",
-          "Ingeniería Civil en Informática e Inteligencia Artificial",
-          "Ingeniería Civil en Minería",
-          "Ingeniería Civil en Obras Civiles",
-          "Geología",
-        ])
+        const { data: carrerasData } = await supabase.from("carrera").select("id, nombre").order("nombre")
+        if (carrerasData) setCarreras(carrerasData)
 
         // Cargar usuarios
         let query = supabase
@@ -59,7 +51,8 @@ export default function ConectarPage() {
             id, 
             nombre, 
             correo, 
-            carrera, 
+            id_carrera,
+            carrera(nombre), 
             anio,
             avatar,
             ramos_favoritos:usuarios_ramos(
@@ -83,7 +76,8 @@ export default function ConectarPage() {
           id: user.id,
           nombre: user.nombre || "Usuario sin nombre",
           correo: user.correo || "",
-          carrera: user.carrera || "No especificada",
+          carrera: user.carrera?.nombre || "No especificada",
+          id_carrera: user.id_carrera?.toString() || null,
           anio: user.anio || "No especificado",
           avatar: user.avatar || null,
           ramos: user.ramos_favoritos
@@ -119,7 +113,7 @@ export default function ConectarPage() {
     
     // Filtrar por carrera
     if (carreraFilter !== "todas") {
-      result = result.filter(user => user.carrera === carreraFilter)
+      result = result.filter(user => user.id_carrera === carreraFilter)
     }
     
     setFilteredUsers(result)
@@ -157,9 +151,9 @@ export default function ConectarPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="todas">Todas las carreras</SelectItem>
-                    {carreras.map((carrera) => (
-                      <SelectItem key={carrera} value={carrera}>
-                        {carrera}
+                    {carreras.map((c) => (
+                      <SelectItem key={c.id} value={c.id.toString()}>
+                        {c.nombre}
                       </SelectItem>
                     ))}
                   </SelectContent>

@@ -52,17 +52,6 @@ import { Switch } from "@/components/ui/switch"
 import { Checkbox } from "@/components/ui/checkbox"
 import { CATEGORIAS_MATERIAL } from "@/lib/constants"
 
-const carreras = [
-  "Ingeniería Plan Común",
-  "Ingeniería Civil Industrial",
-  "Ingeniería Civil en BioMedicina",
-  "Ingeniería Civil en Informática e Innovación Tecnológica",
-  "Ingeniería Civil en Informática e Inteligencia Artificial",
-  "Ingeniería Civil en Minería",
-  "Ingeniería Civil en Obras Civiles",
-  "Geología",
-]
-
 const semestres = ["2026-1", "2025-1", "2024-2", "2024-1", "2023-2", "2023-1", "2022-2", "2022-1", "2021-2", "2021-1"]
 
 const MATERIAL_TYPE_CONFIG = {
@@ -184,7 +173,7 @@ export default function UploadPage() {
     ramo_id: null,
     profesor_id: null,
     profesorNombre: "",
-    carrera: "",
+    id_carrera: null,
     descripcion: "",
     solucion: false,
     dificultad: "",
@@ -227,6 +216,30 @@ export default function UploadPage() {
     dificultad: false,
   })
 
+  const [carreras, setCarreras] = useState([])
+
+  // Cargar carreras desde la tabla `carrera`
+  useEffect(() => {
+    const fetchCarreras = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("carrera")
+          .select("*")
+          .order("nombre")
+        
+        if (error) {
+          console.error("Error al cargar carreras:", error)
+          return
+        }
+        
+        setCarreras(data || [])
+      } catch (err) {
+        console.error("Error inesperado al cargar carreras:", err)
+      }
+    }
+    fetchCarreras()
+  }, [])
+
   // Monitorear cambios en formData
   useEffect(() => {
     console.log("👁️ FormData cambió:", formData)
@@ -234,13 +247,13 @@ export default function UploadPage() {
 
   // Preseleccionar la carrera del usuario si el formulario aún no tiene una
   useEffect(() => {
-    if (!userData?.carrera) return
+    if (!userData?.id_carrera) return
 
     setFormData((prev) => {
-      if (prev.carrera) return prev
-      return { ...prev, carrera: userData.carrera }
+      if (prev.id_carrera) return prev
+      return { ...prev, id_carrera: userData.id_carrera }
     })
-  }, [userData?.carrera])
+  }, [userData?.id_carrera])
 
   // Limpiar archivo del Storage si se abandona la página sin guardar
   useEffect(() => {
@@ -557,7 +570,7 @@ export default function UploadPage() {
           categoria: formData.categoria,
           semestre: formData.semestre,
           ramo_id: formData.ramo_id,
-          carrera: formData.carrera,
+          id_carrera: formData.id_carrera,
           descripcion: formData.descripcion,
           file_url: storagePath, // Usar el path ya guardado
           autor_id: userData.id,
@@ -624,7 +637,7 @@ export default function UploadPage() {
       ramo_id: null,
       profesor_id: null,
       profesorNombre: "",
-      carrera: userData?.carrera || "",
+      id_carrera: userData?.id_carrera || null,
       descripcion: "",
       solucion: false,
       dificultad: "",
@@ -656,7 +669,7 @@ export default function UploadPage() {
       ramo_id: null,
       profesor_id: null,
       profesorNombre: "",
-      carrera: userData?.carrera || "",
+      id_carrera: userData?.id_carrera || null,
       descripcion: "",
       solucion: false,
       dificultad: "",
@@ -701,7 +714,7 @@ export default function UploadPage() {
   // Efecto para cargar los ramos cuando se selecciona una carrera
   useEffect(() => {
     const cargarRamos = async () => {
-      if (!formData.carrera) {
+      if (!formData.id_carrera) {
         setRamosDisponibles([])
         return
       }
@@ -710,7 +723,7 @@ export default function UploadPage() {
         const { data, error } = await supabase
           .from("ramos")
           .select("id, nombre")
-          .eq("carrera", formData.carrera)
+          .eq("id_carrera", formData.id_carrera)
           .order("nombre")
         
         if (error) {
@@ -725,7 +738,7 @@ export default function UploadPage() {
     }
     
     cargarRamos()
-  }, [formData.carrera])
+  }, [formData.id_carrera])
 
   // Efecto para sincronizar ramo_id si el nombre ya está en el formulario
   useEffect(() => {
@@ -841,12 +854,12 @@ export default function UploadPage() {
     try {
       let query = supabase
         .from("ramos")
-        .select("id, nombre, carrera")
+        .select("id, nombre, id_carrera")
         .ilike("nombre", `%${nombreRamo}%`)
         .limit(5)
 
-      if (formData.carrera) {
-        query = query.eq("carrera", formData.carrera)
+      if (formData.id_carrera) {
+        query = query.eq("id_carrera", formData.id_carrera)
       }
 
       const { data, error } = await query
@@ -872,7 +885,7 @@ export default function UploadPage() {
           ...prev,
           ramo: selected.nombre,
           ramo_id: selected.id,
-          carrera: prev.carrera || selected.carrera || "",
+          id_carrera: prev.id_carrera || selected.id_carrera || null,
         }))
       } else {
         console.log("⚠️ Múltiples ramos encontrados; requiere selección manual")
@@ -930,7 +943,7 @@ export default function UploadPage() {
   const materialConfig = MATERIAL_TYPE_CONFIG[formData.categoria] || DEFAULT_MATERIAL_CONFIG
   const missingProfesor = materialConfig.requiresProfesor && !formData.profesor_id
   const missingDificultad = materialConfig.requiresDificultad && !formData.dificultad
-  const isFormValid = uploadedFile && !uploadedFile.error && formData.titulo && formData.categoria && formData.carrera && !missingProfesor && !missingDificultad
+  const isFormValid = uploadedFile && !uploadedFile.error && formData.titulo && formData.categoria && formData.id_carrera && !missingProfesor && !missingDificultad
   const pendingFieldClass = "bg-yellow-50 border-yellow-200 focus-visible:ring-yellow-300"
 
   if (showSuccess) {
@@ -1259,18 +1272,18 @@ export default function UploadPage() {
                       </div>
 
                       <div>
-                        <Label htmlFor="carrera">Carrera</Label>
+          <Label htmlFor="carrera">Carrera</Label>
                         <Select
-                          value={formData.carrera}
-                          onValueChange={(value) => setFormData({ ...formData, carrera: value })}
+                          value={formData.id_carrera?.toString()}
+                          onValueChange={(value) => setFormData({ ...formData, id_carrera: parseInt(value) })}
                         >
-                          <SelectTrigger id="carrera" className={cn(!formData.carrera && pendingFieldClass)}>
+                          <SelectTrigger id="carrera" className={cn(!formData.id_carrera && pendingFieldClass)}>
                             <SelectValue placeholder="Selecciona la carrera" />
                           </SelectTrigger>
                           <SelectContent>
-                            {carreras.map((carrera) => (
-                              <SelectItem key={carrera} value={carrera}>
-                                {carrera}
+                            {carreras.map((c) => (
+                              <SelectItem key={c.id} value={c.id.toString()}>
+                                {c.nombre}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -1330,7 +1343,7 @@ export default function UploadPage() {
                               variant="outline"
                               role="combobox"
                               className={cn("w-full justify-between", !formData.ramo_id && pendingFieldClass)}
-                              disabled={!formData.carrera}
+                              disabled={!formData.id_carrera}
                             >
                               {formData.ramo || "Seleccionar ramo"}
                               <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -1520,7 +1533,7 @@ export default function UploadPage() {
                 Atrás
               </Button>
               <Button
-                disabled={!formData.titulo || !formData.categoria || !formData.carrera || !rightsAccepted || missingProfesor || missingDificultad}
+                disabled={!formData.titulo || !formData.categoria || !formData.id_carrera || !rightsAccepted || missingProfesor || missingDificultad}
                 onClick={(e) => handleSubmit(e)}
                 className="w-2/3 ml-2 bg-blue-600"
               >
@@ -1533,3 +1546,4 @@ export default function UploadPage() {
     </div>
   )
 }
+

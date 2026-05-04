@@ -77,11 +77,11 @@ export default function Dashboard() {
                         ramo_id,
                         ramos:ramo_id (
                           nombre,
-                          carrera,
+                          id_carrera, carrera(nombre),
                           semestre
                         ),
                                                 profesores_list:material_profesor ( profesor ( id, nombre, autorizacion ) ),
-                        carrera,
+                        id_carrera, carrera(nombre),
                         semestre,
                         autor_id,
                         categoria,
@@ -115,19 +115,19 @@ export default function Dashboard() {
                 
                 // Fallback: si es "recomendados" y no hay resultados por ramos,
                 // mostrar material de la misma carrera ordenado por mejor valorados
-                if (activeTab === "recommended" && (!data || data.length === 0) && userData?.carrera) {
+                if (activeTab === "recommended" && (!data || data.length === 0) && userData?.id_carrera) {
                     const fallback = await supabase
                         .from("material")
                         .select(`
                             id, titulo, ramo_id,
-                            ramos:ramo_id (nombre, carrera, semestre),
+                            ramos:ramo_id (nombre, id_carrera, semestre),
                             profesores_list:material_profesor ( profesor ( id, nombre, autorizacion ) ),
-                            carrera, semestre, autor_id, categoria,
+                            id_carrera, carrera(nombre), semestre, autor_id, categoria,
                             file_url, descripcion, created_at,
                             val_positivas, val_negativas, descargas, solucion, status
                         `)
                         .eq("status", "public")
-                        .eq("carrera", userData.carrera)
+                        .eq("id_carrera", userData.id_carrera)
                         .order("val_positivas", { ascending: false })
                         .limit(20);
                     
@@ -150,7 +150,7 @@ export default function Dashboard() {
                     // Obtener el nombre del ramo desde la relación
                     subject: item.ramos ? item.ramos.nombre : "No especificado",
                     ramo_id: item.ramo_id,
-                    career: item.carrera,
+                    career: item.carrera?.nombre || "No especificada",
                     professor: item.profesores_list?.map((rel) => rel.profesor?.nombre).filter(Boolean).join(", ") || "No especificado",
                     semester: item.semestre || "No especificado",
                     date: new Date(item.created_at).toLocaleDateString("es-CL"),
@@ -356,3 +356,8 @@ export default function Dashboard() {
         </div>
     )
 }
+
+
+
+
+

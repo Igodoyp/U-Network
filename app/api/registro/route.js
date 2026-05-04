@@ -2,11 +2,11 @@ import { supabase } from '@/lib/supabaseClient'
 
 export async function POST(request) {
   const body = await request.json()
-  const { nombre, correo, carrera, semestre } = body
+  const { nombre, correo, id_carrera, semestre } = body
 
   const { data, error } = await supabase
-    .from('usuarios')
-    .insert([{ nombre, correo, carrera, semestre }])
+    .from("usuarios")
+    .insert([{ nombre, correo, id_carrera, semestre }])
 
   if (error) {
     console.error(error)
