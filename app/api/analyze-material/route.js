@@ -171,7 +171,7 @@ EXTRAE LA SIGUIENTE INFORMACIÓN EN FORMATO JSON ESTRICTO:
   "ramo": "string" (El nombre exacto de la asignatura inferido del texto. Si es inválido, pon null),
   "semestre": "string" (Formato "AÑO-SEMESTRE" donde SEMESTRE es 1 o 2. Ej: "2023-1". Usa 2 para "Bimestre IV/2do semestre". Usa 1 para "1er semestre/Bimestre I-II". Si solo hay año, pon el año. Si no hay nada, pon null),
   "descripcion": "string" (Resumen muy breve de los temas tratados, máx 15 palabras. Si es inválido, pon null),
-  "profesor": "string" (Nombre y apellido del profesor si aparece explícitamente, si no, null),
+  "profesores": ["string"] (Lista de nombres completos de todos los profesores que aparecen explícitamente. Devuelve [] si no aparece ninguno),
   "solucion": booleano (true si el archivo contiene respuestas o pauta explícita, false si son solo preguntas o apuntes),
   "dificultad": "string" (Elige UNO: "Fácil", "Media", "Difícil" basándote en la complejidad matemática/teórica del texto. Si es un apunte básico es Fácil, si es un certamen avanzado es Difícil)
 }
@@ -182,7 +182,7 @@ IMPORTANTE: Devuelve ÚNICA Y EXCLUSIVAMENTE un objeto JSON válido. No uses blo
     let result
     try {
       // Construir contents con estructura correcta para el nuevo SDK
-      console.log("3️⃣ Enviando a Gemini 2.0 Flash...")
+      console.log("3️⃣ Enviando a Gemini 2.5 Flash...")
       const userParts = [
         { text: prompt },
         { inlineData: { data: base64Data, mimeType } }
@@ -206,7 +206,7 @@ IMPORTANTE: Devuelve ÚNICA Y EXCLUSIVAMENTE un objeto JSON válido. No uses blo
       console.log(`  → Tamaño estimado del payload (bytes): ${Math.round(estimatedPayloadSize)}`)
 
       result = await client.models.generateContent({
-        model: "gemini-2.0-flash",
+        model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
         contents: contents,
         config: {
           responseMimeType: "application/json",
@@ -217,7 +217,8 @@ IMPORTANTE: Devuelve ÚNICA Y EXCLUSIVAMENTE un objeto JSON válido. No uses blo
       console.error("❌ Error generando contenido:", genError.message)
       console.error("  Details:", genError)
       await supabase.storage.from("materiales").remove([filePath])
-      const statusCode = genError?.status || genError?.error?.code || 500
+      const providerStatus = Number(genError?.status || genError?.error?.code)
+      const statusCode = providerStatus >= 400 && providerStatus < 600 ? 502 : 500
       return NextResponse.json(
         {
           error:

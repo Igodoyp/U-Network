@@ -10,15 +10,57 @@ export default function AuthCallbackPage() {
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        // Esperar a que Supabase procese la sesión
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        const params = new URLSearchParams(window.location.search)
+        const authError = params.get("error_description") || params.get("error")
+
+        if (authError) {
+          console.error("Error devuelto por el proveedor de autenticación:", authError)
+          router.replace(`/?authError=${encodeURIComponent(authError)}`)
+          return
+        }
+
+        const code = params.get("code")
+        let sessionError = null
+
+        if (code) {
+          const result = await supabase.auth.exchangeCodeForSession(code)
+          sessionError = result.error
+        }
+
+        let { data: { session }, error: currentSessionError } = await supabase.auth.getSession()
+        sessionError = sessionError || currentSessionError
+
+        // Supabase procesa automáticamente los retornos implícitos que llegan en el hash.
+        if (!session && !sessionError && window.location.hash) {
+          session = await new Promise((resolve) => {
+            let subscription
+            const timeout = setTimeout(() => {
+              subscription?.unsubscribe()
+              resolve(null)
+            }, 3000)
+            const result = supabase.auth.onAuthStateChange((_event, nextSession) => {
+              if (nextSession) {
+                clearTimeout(timeout)
+                result.data.subscription.unsubscribe()
+                resolve(nextSession)
+              }
+            })
+            subscription = result.data.subscription
+          })
+        }
+
+        const authenticationError = sessionError
         
-        // Forzar verificación de sesión
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-        
-        if (sessionError || !session?.user) {
-          console.error("Error durante la autenticación:", sessionError)
-          router.push("/")
+        if (authenticationError || !session?.user) {
+          console.error(
+            "Error durante la autenticación:",
+            authenticationError || {
+              message: "No se recibió una sesión desde el proveedor",
+              hasCode: true,
+              hasHash: Boolean(window.location.hash),
+            }
+          )
+          router.replace("/")
           return
         }
 

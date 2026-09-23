@@ -59,7 +59,7 @@ export function OnboardingForm({
     resolvedInitial || (needsProfile ? 'profile' : 'subjects')
   )
   const [carrera, setCarrera] = useState(carreraActual || '')
-  const [carrerasList, setCarrerasList] = useState<{id: number, nombre: string}[]>([])
+  const [carrerasList, setCarrerasList] = useState<{id: string, nombre: string}[]>([])
 
   useEffect(() => {
     const fetchCarreras = async () => {
@@ -102,7 +102,7 @@ export function OnboardingForm({
       if (currentStep !== 'subjects' || !carrera) return
 
       try {
-        const { data: ramosAgrupados, error } = await authService.getRamosPorCarrera(parseInt(carrera))
+        const { data: ramosAgrupados, error } = await authService.getRamosPorCarrera(carrera)
 
         if (error) {
           console.error("Error al obtener ramos:", error)
@@ -284,7 +284,7 @@ export function OnboardingForm({
               </SelectTrigger>
               <SelectContent>
                 {carrerasList.map((c) => (
-                  <SelectItem key={c.id} value={c.id.toString()}>{c.nombre}</SelectItem>
+                  <SelectItem key={c.id} value={c.id}>{c.nombre}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -382,7 +382,7 @@ export function OnboardingForm({
         <div className="space-y-1">
           <div className="flex items-center justify-between px-1">
             <Label className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-              Ramos de {carrerasList.find((c) => c.id.toString() === carrera)?.nombre || ""}
+              Ramos de {carrerasList.find((c) => c.id === carrera)?.nombre || ""}
             </Label>
             {ramoSearch && (
               <span className="text-xs text-gray-400">

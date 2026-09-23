@@ -252,7 +252,7 @@ export async function getSemestresPorCarrera(id_carrera: number) {
  * Los ramos semestrales se agrupan por semestre (1-2 = año 1, 3-4 = año 2, etc.)
  * Los ramos trimestrales se agrupan por trimestre (1-3 = año 1, 4-6 = año 2, etc.)
  */
-export async function getRamosPorCarrera(id_carrera: number): Promise<{ data: Record<number, Ramo[]>, error: any }> {
+export async function getRamosPorCarrera(id_carrera: string): Promise<{ data: Record<number, Ramo[]>, error: any }> {
   try {
     const { data, error } = await supabase
       .from("ramos")

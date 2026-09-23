@@ -36,7 +36,12 @@ export const UserProvider = ({ children }) => {
               setUserData(null)
             }
           } else if (data) {
-            setUserData(data)
+            setUserData({
+              ...data,
+              carrera: typeof data.carrera === "object"
+                ? data.carrera?.nombre || ""
+                : data.carrera || "",
+            })
           }
         } else {
           setUserData(null)

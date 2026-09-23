@@ -171,8 +171,7 @@ export default function UploadPage() {
     semestre: "",
     ramo: "",
     ramo_id: null,
-    profesor_id: null,
-    profesorNombre: "",
+    profesores: [],
     id_carrera: null,
     descripcion: "",
     solucion: false,
@@ -210,7 +209,7 @@ export default function UploadPage() {
     categoria: false,
     ramo: false,
     semestre: false,
-    profesor: false,
+    profesores: false,
     descripcion: false,
     solucion: false,
     dificultad: false,
@@ -403,7 +402,7 @@ export default function UploadPage() {
           console.log("  - categoria:", metadata.categoria, `(${typeof metadata.categoria})`)
           console.log("  - semestre:", metadata.semestre, `(${typeof metadata.semestre})`)
           console.log("  - ramo:", metadata.ramo, `(${typeof metadata.ramo})`)
-          console.log("  - profesor:", metadata.profesor, `(${typeof metadata.profesor})`)
+          console.log("  - profesores:", metadata.profesores, `(${typeof metadata.profesores})`)
           console.log("  - descripcion:", metadata.descripcion, `(${typeof metadata.descripcion})`)
           console.log("  - solucion:", metadata.solucion, `(${typeof metadata.solucion})`)
           console.log("  - file_hash:", metadata.file_hash, `(${typeof metadata.file_hash})`)
@@ -434,7 +433,7 @@ export default function UploadPage() {
             categoria: !!metadata.categoria,
             ramo: !!metadata.ramo,
             semestre: !!metadata.semestre,
-            profesor: !!metadata.profesor,
+            profesores: Array.isArray(metadata.profesores) && metadata.profesores.length > 0,
             descripcion: !!metadata.descripcion,
             solucion: !!metadata.solucion,
             dificultad: !!metadata.dificultad,
@@ -445,10 +444,14 @@ export default function UploadPage() {
             console.log("🎯 Ramo detectado:", metadata.ramo)
             searchAndSelectRamo(metadata.ramo)
           }
-          if (metadata.profesor) {
-            console.log("👨‍🏫 Profesor detectado:", metadata.profesor)
-            // Buscar y seleccionar automáticamente si existe
-            searchAndSelectProfesor(metadata.profesor)
+          const detectedProfessors = Array.isArray(metadata.profesores)
+            ? metadata.profesores
+            : metadata.profesor
+              ? [metadata.profesor]
+              : []
+          if (detectedProfessors.length > 0) {
+            console.log("👨‍🏫 Profesores detectados:", detectedProfessors)
+            searchAndSelectProfesores(detectedProfessors)
           }
 
           console.log("✨ Campos completados automáticamente!")
@@ -505,7 +508,7 @@ export default function UploadPage() {
       categoria: false,
       ramo: false,
       semestre: false,
-      profesor: false,
+      profesores: false,
       descripcion: false,
       solucion: false,
       dificultad: false,
@@ -579,30 +582,38 @@ export default function UploadPage() {
           file_hash: formData.file_hash,
           file_size: formData.file_size,
           file_type: formData.file_type,
+          status: "public",
         },
-      ]).select()  // Añadir .select() para recibir los datos insertados
+      ]).select().single()
 
       if (metadataError) {
         console.error("Error al guardar metadata:", metadataError)
-        alert("Error al guardar información del material.")
+        alert(`Error al guardar información del material: ${metadataError.message}`)
+        setIsUploading(false)
+        return
+      }
+
+      if (!metadataData?.id) {
+        console.error("Supabase no devolvió el material creado:", metadataData)
+        alert("No se confirmó la creación del material. Revisa las políticas de Supabase.")
         setIsUploading(false)
         return
       }
 
       console.log("Metadata guardada exitosamente:", metadataData)
       console.log("🔐 Verificación de datos guardados:")
-      if (metadataData && metadataData.length > 0) {
-        console.log(`   - file_hash guardado: "${metadataData[0].file_hash}" (tipo: ${typeof metadataData[0].file_hash})`)
-        console.log(`   - file_size guardado: ${metadataData[0].file_size}`)
-        console.log(`   - file_type guardado: ${metadataData[0].file_type}`)
+      if (metadataData) {
+        console.log(`   - file_hash guardado: "${metadataData.file_hash}" (tipo: ${typeof metadataData.file_hash})`)
+        console.log(`   - file_size guardado: ${metadataData.file_size}`)
+        console.log(`   - file_type guardado: ${metadataData.file_type}`)
 
-        if (formData.profesor_id) {
+        if (formData.profesores.length > 0) {
           const { error: relationError } = await supabase
             .from("material_profesor")
-            .insert({
-              id_material: metadataData[0].id,
-              id_profesor: formData.profesor_id,
-            })
+            .insert(formData.profesores.map((profesor) => ({
+              id_material: metadataData.id,
+              id_profesor: profesor.id,
+            })))
 
           if (relationError) {
             console.error("Error al guardar relación material-profesor:", relationError)
@@ -610,7 +621,7 @@ export default function UploadPage() {
           }
         }
 
-        setUploadedMaterialId(metadataData[0].id)
+        setUploadedMaterialId(metadataData.id)
       }
 
 
@@ -635,8 +646,7 @@ export default function UploadPage() {
       semestre: "",
       ramo: "",
       ramo_id: null,
-      profesor_id: null,
-      profesorNombre: "",
+      profesores: [],
       id_carrera: userData?.id_carrera || null,
       descripcion: "",
       solucion: false,
@@ -667,8 +677,7 @@ export default function UploadPage() {
       semestre: "",
       ramo: "",
       ramo_id: null,
-      profesor_id: null,
-      profesorNombre: "",
+      profesores: [],
       id_carrera: userData?.id_carrera || null,
       descripcion: "",
       solucion: false,
@@ -688,8 +697,7 @@ export default function UploadPage() {
     setFormData((prev) => ({
       ...prev,
       categoria,
-      profesor_id: config.requiresProfesor ? prev.profesor_id : null,
-      profesorNombre: config.requiresProfesor ? prev.profesorNombre : "",
+      profesores: config.requiresProfesor ? prev.profesores : [],
       solucion: config.requiresSolucion ? prev.solucion : false,
       dificultad: config.requiresDificultad ? prev.dificultad : "",
     }))
@@ -791,40 +799,50 @@ export default function UploadPage() {
     }
   };
 
-  // Nueva función: Buscar profesor y si existe, seleccionarlo automáticamente
-  const searchAndSelectProfesor = async (nombreProfesor) => {
-    console.log("🔍 Buscando profesor:", nombreProfesor);
-    setProfesorSearch(nombreProfesor);
-    
-    if (nombreProfesor.trim().length < 2) {
-      console.log("⚠️ Nombre muy corto");
-      return;
-    }
-    
-    try {
-      const { data, error } = await supabase
-        .from("profesor")
-        .select("id, nombre")
-        .ilike("nombre", `%${nombreProfesor}%`)
-        .limit(5);
-      
-      if (error) {
-        console.error("❌ Error al buscar profesores:", error);
-        return;
+  const searchAndSelectProfesores = async (names) => {
+    for (const name of names) {
+      const normalizedName = name?.trim()
+      if (!normalizedName || normalizedName.length < 2) continue
+
+      try {
+        // Primero buscar coincidencia exacta, no solo coincidencias parciales.
+        const { data, error } = await supabase
+          .from("profesor")
+          .select("id, nombre")
+          .ilike("nombre", normalizedName)
+          .limit(1)
+
+        if (error) {
+          console.error("❌ Error al buscar profesores:", error)
+          continue
+        }
+
+        if (data?.[0]) {
+          selectProfesor(data[0])
+          continue
+        }
+
+        // Gemini puede detectar un profesor todavía inexistente en Supabase.
+        const { data: created, error: createError } = await supabase
+          .from("profesor")
+          .insert({ nombre: normalizedName })
+          .select("id, nombre")
+          .single()
+
+        if (createError) {
+          console.error("❌ Error al crear profesor detectado por IA:", createError)
+          continue
+        }
+
+        if (created) {
+          console.log("✅ Profesor creado automáticamente:", created.nombre)
+          selectProfesor(created)
+        }
+      } catch (err) {
+        console.error("❌ Error inesperado al buscar profesores:", err)
       }
-      
-      console.log("✅ Búsqueda encontró:", data?.length || 0, "resultado(s)");
-      setProfesores(data || []);
-      
-      // Si encuentra exactamente un profesor, seleccionarlo automáticamente
-      if (data && data.length === 1) {
-        console.log("⚡ Auto-seleccionando profesor único:", data[0].nombre);
-        selectProfesor(data[0]);
-      }
-    } catch (err) {
-      console.error("❌ Error inesperado al buscar profesores:", err);
     }
-  };
+  }
 
   // Buscar y seleccionar ramo automáticamente usando nombre
   const searchAndSelectRamo = async (nombreRamo) => {
@@ -913,12 +931,7 @@ export default function UploadPage() {
       }
       
       if (data && data.length > 0) {
-        // Actualizar formData con el nuevo profesor
-        setFormData((prev) => ({
-          ...prev,
-          profesor_id: data[0].id,
-          profesorNombre: data[0].nombre,
-        }))
+        selectProfesor(data[0])
         setOpenProfesor(false)
       }
     } catch (err) {
@@ -931,17 +944,21 @@ export default function UploadPage() {
 
   // Añadir función para seleccionar un profesor existente
   const selectProfesor = (profesor) => {
+    setFormData((prev) => prev.profesores.some((selected) => selected.id === profesor.id)
+      ? prev
+      : { ...prev, profesores: [...prev.profesores, profesor] })
+    setProfesorSearch("")
+  }
+
+  const removeProfesor = (profesorId) => {
     setFormData((prev) => ({
       ...prev,
-      profesor_id: profesor.id,
-      profesorNombre: profesor.nombre,
+      profesores: prev.profesores.filter((profesor) => profesor.id !== profesorId),
     }))
-    setProfesorSearch(profesor.nombre)
-    setOpenProfesor(false)
   }
 
   const materialConfig = MATERIAL_TYPE_CONFIG[formData.categoria] || DEFAULT_MATERIAL_CONFIG
-  const missingProfesor = materialConfig.requiresProfesor && !formData.profesor_id
+  const missingProfesor = materialConfig.requiresProfesor && formData.profesores.length === 0
   const missingDificultad = materialConfig.requiresDificultad && !formData.dificultad
   const isFormValid = uploadedFile && !uploadedFile.error && formData.titulo && formData.categoria && formData.id_carrera && !missingProfesor && !missingDificultad
   const pendingFieldClass = "bg-yellow-50 border-yellow-200 focus-visible:ring-yellow-300"
@@ -1379,8 +1396,8 @@ export default function UploadPage() {
 
                       <div>
                         <div className="flex items-center justify-between mb-2">
-                          <Label>Profesor</Label>
-                          {aiGenerated.profesor && (
+                          <Label>Profesores</Label>
+                          {aiGenerated.profesores && (
                             <Badge variant="secondary" className="text-xs">
                               <Sparkles className="w-3 h-3 mr-1" />
                               IA
@@ -1388,14 +1405,15 @@ export default function UploadPage() {
                           )}
                         </div>
                         {materialConfig.requiresProfesor ? (
+                          <>
                           <Popover open={openProfesor} onOpenChange={setOpenProfesor}>
                             <PopoverTrigger asChild>
                               <Button
                                 variant="outline"
                                 role="combobox"
-                                className={cn("w-full justify-between", !formData.profesor_id && pendingFieldClass)}
+                                className={cn("w-full justify-between", formData.profesores.length === 0 && pendingFieldClass)}
                               >
-                                {formData.profesorNombre || "Seleccionar o crear profesor"}
+                                Seleccionar o crear profesores
                                 <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                               </Button>
                             </PopoverTrigger>
@@ -1425,6 +1443,9 @@ export default function UploadPage() {
                                         key={profesor.id}
                                         onSelect={() => selectProfesor(profesor)}
                                       >
+                                        {formData.profesores.some((selected) => selected.id === profesor.id) && (
+                                          <Check className="mr-2 h-4 w-4" />
+                                        )}
                                         {profesor.nombre}
                                       </CommandItem>
                                     ))}
@@ -1433,6 +1454,23 @@ export default function UploadPage() {
                               </Command>
                             </PopoverContent>
                           </Popover>
+                          {formData.profesores.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {formData.profesores.map((profesor) => (
+                                <Badge key={profesor.id} variant="secondary" className="flex items-center gap-1">
+                                  {profesor.nombre}
+                                  <button
+                                    type="button"
+                                    onClick={() => removeProfesor(profesor.id)}
+                                    aria-label={`Quitar a ${profesor.nombre}`}
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </button>
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                          </>
                         ) : (
                           <div className="rounded-md border bg-gray-50 px-3 py-2 text-sm text-gray-600">
                             Para {formData.categoria || "este tipo de material"}, no se requiere profesor.

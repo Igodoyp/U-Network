@@ -174,7 +174,7 @@ export default function UNetworkAuth() {
       const updatedUser = {
         ...userData,
         nombre,
-        carrera,
+        id_carrera: carrera,
         anio,
       }
 
@@ -352,9 +352,9 @@ export default function UNetworkAuth() {
             <OnboardingForm
               usuarioId={userData.id}
               userName={userData.nombre}
-              carreraActual={userData.carrera}
+              carreraActual={userData.id_carrera || ""}
               anioActual={userData.anio}
-              needsProfile={!userData.carrera}
+              needsProfile={!userData.id_carrera}
               onSaveProfile={handleSaveProfile}
               onSaveIntereses={async () => {}}
               onSaveRamos={handleSaveRamos}
